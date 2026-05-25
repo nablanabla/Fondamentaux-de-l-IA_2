@@ -21,7 +21,14 @@ Cette expérience motivera l'introduction d'une approche radicalement différent
 
 **Durée estimée :** 20 minutes
 
-[Lancer l'activité](https://nablanabla.github.io/Fondamentaux-de-l-IA_2/phase1-symbolique/)
+[Lancer l'activité 1: Expliquer à un ordinateur ce qu'est un 3](https://nablanabla.github.io/Fondamentaux-de-l-IA_2/phase1-symbolique/)
+
+### Quelques succès de l'approche symbolique en sciences de la santé
+
+L'approche symbolique a pourtant connu de véritables succès dans des domaines bien délimités. Le système expert [MYCIN](https://en.wikipedia.org/wiki/Mycin), développé à Stanford dans les années 1970, était capable de diagnostiquer certaines infections bactériennes avec une précision comparable à celle de médecins experts, en s'appuyant sur environ 600 règles logiques du type *"SI le patient a de la fièvre ET l'organisme est gram-négatif ALORS..."*. Dans ce contexte, les règles pouvaient être formulées explicitement, car le domaine médical concerné était suffisamment contraint.
+
+La reconnaissance de l'écriture manuscrite pose un problème d'une toute autre nature : la variabilité est infinie, et personne ne sait formuler ce qu'un humain fait naturellement en reconnaissant un chiffre.
+
 
 ---
 
