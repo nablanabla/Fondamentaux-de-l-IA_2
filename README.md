@@ -22,6 +22,11 @@ Cette expérience motivera l'introduction d'une approche radicalement différent
 
 ---
 
+##  Activité 2: L'approche connexioniste, l'exemple du perceptron
+
+---
+
+
 ## Utilisation pédagogique
 
 **Public visé :** Étudiants de premier et deuxième cycle
