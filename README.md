@@ -8,7 +8,7 @@ Cette activité aborde une question fondamentale en intelligence artificielle : 
 <p align="center">
    <img src="assets/images/kaggle_mnist.png" alt="Extrait de la base de données MNIST">
   <br>
-  <em>Figure 1 : Extrait de la base de données <a href="https://en.wikipedia.org/wiki/MNIST_database" target="_blank">MNIST</a>, de chiffres écrits à la main et étiquetés par leur valeur.</em>
+  <em>Figure 1 : Extrait de la base de données <a href="https://en.wikipedia.org/wiki/MNIST_database" target="_blank">MNIST</a>, de chiffres écrits à la main et étiquetés soit par leur valeur dans le <code>training image</code> soit par le résultat de leur reconnaissance dans le <code>test image</code>.</em>
 </p>
 
 
