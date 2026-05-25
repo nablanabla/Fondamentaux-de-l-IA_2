@@ -3,7 +3,7 @@
 
 ##  Activité 1: Approche symbolique et approche connexionniste
 
-Cette activité aborde une question fondamentale en intelligence artificielle : comment un ordinateur peut-il reconnaître un chiffre écrit ?
+Cette activité aborde une question fondamentale en intelligence artificielle : **comment un ordinateur peut-il reconnaître un chiffre écrit** ?
 
 Pendant longtemps, les informaticiens ont tenté de répondre à cette question en écrivant des règles explicites — c'est ce qu'on appelle l'**approche symbolique**, ou les systèmes experts. Cette approche a connu de grands succès dans certains domaines, mais s'est heurtée à des limites profondes dès qu'il s'agissait de traiter des données issues du monde réel, comme l'écriture manuscrite.
 
