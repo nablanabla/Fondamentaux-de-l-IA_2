@@ -28,7 +28,7 @@ Cette expérience motivera l'introduction d'une approche radicalement différent
 L'approche symbolique a pourtant connu de véritables succès dans des domaines bien délimités. Le système expert [MYCIN](https://en.wikipedia.org/wiki/Mycin), développé à Stanford dans les années 1970, était capable de diagnostiquer certaines infections bactériennes avec une précision comparable à celle de médecins experts, en s'appuyant sur environ 600 règles logiques du type *"SI le patient a de la fièvre ET l'organisme est gram-négatif ALORS..."*. Dans ce contexte, les règles pouvaient être formulées explicitement, car le domaine médical concerné était suffisamment contraint.
 
 <p align="center">
-   <img src="assets/images/kaggle_mnist.png" alt="Extrait de la base de données MNIST">
+   <img src="assets/images/MYCIN.jpg" alt="MYCIN">
   <br>
   <em>Figure 2 : le manuel descriptif du système MYCIN (1984) - 754 pages !</em>
 </p>
