@@ -5,10 +5,13 @@
 
 Cette activité aborde une question fondamentale en intelligence artificielle : **comment un ordinateur peut-il reconnaître un chiffre écrit** ?
 
-<figure>
-  <img src="assets/images/kaggle_mnist.png" alt="Extrait de la base de données MNIST">
-  <figcaption>Extrait de la base de données <a href="https://en.wikipedia.org/wiki/MNIST_database" target="_blank">MNIST</a>, de chiffres écrits à la main et étiquetés par leur valeur.</figcaption>
-</figure>
+<p align="center">
+   <img src="assets/images/kaggle_mnist.png" alt="Extrait de la base de données MNIST">
+  <br>
+  <em>Figure 1 : Extrait de la base de données <a href="https://en.wikipedia.org/wiki/MNIST_database" target="_blank">MNIST</a>, de chiffres écrits à la main et étiquetés par leur valeur.</em>
+</p>
+
+
 
 Pendant longtemps, les informaticiens ont tenté de répondre à cette question en écrivant des règles explicites — c'est ce qu'on appelle l'**approche symbolique**, ou les systèmes experts. Cette approche a connu de grands succès dans certains domaines, mais s'est heurtée à des limites profondes dès qu'il s'agissait de traiter des données issues du monde réel, comme l'écriture manuscrite.
 
