@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reconnaissance de chiffres — Phase 1 : L'approche symbolique</title>
+
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" />
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+
+  <style>
+    /* ── Palette & tokens ── */
+    :root {
+      --bg:        #0f1117;
+      --surface:   #181c27;
+      --surface2:  #1e2438;
+      --border:    #2a3050;
+      --accent:    #4f8ef7;
+      --accent2:   #f7794f;
+      --ok:        #3ecf7a;
+      --bad:       #f75a5a;
+      --text:      #e8ecf5;
+      --muted:     #7a85a3;
+      --pixel-on:  #4f8ef7;
+      --pixel-off: #1e2438;
+      --pixel-bad: #f75a5a;
+      --pixel-new: #3ecf7a;
+      --font-head: 'Georgia', 'Times New Roman', serif;
+      --font-body: 'Segoe UI', system-ui, sans-serif;
+      --font-mono: 'Courier New', monospace;
+      --r:         10px;
+    }
+
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    .screen {
+      display: none;
+      min-height: 100vh;
+      padding: 48px 24px;
+      animation: fadeIn .5s ease;
+    }
+    .screen.active { display: block; }
+
+    @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    /* ── Progress bar ── */
+    .progress-bar-wrap {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 4px; background: var(--border); z-index: 100;
+    }
+    .progress-bar-fill {
+      height: 100%; background: var(--accent);
+      transition: width .5s ease;
+    }
+    .progress-label {
+      position: fixed; top: 10px; right: 16px;
+      font-size: 12px; color: var(--muted);
+      font-family: var(--font-mono); z-index: 100;
+    }
+
+    /* ── Typography ── */
+    h1 {
+      font-family: var(--font-head);
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+    h2 {
+      font-family: var(--font-head);
+      font-size: clamp(1.2rem, 3vw, 1.7rem);
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-family: var(--font-mono);
+    }
+    p { margin-bottom: 14px; }
+    strong { color: var(--text); }
+    em { color: var(--accent); font-style: normal; font-weight: 600; }
+
+    /* ── Badge / tag ── */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .badge-phase { background: #1a2540; color: var(--accent); border: 1px solid var(--border); }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 24px;
+      margin: 20px 0;
+    }
+    .card-accent { border-left: 4px solid var(--accent); }
+    .card-warn   { border-left: 4px solid var(--accent2); }
+    .card-ok     { border-left: 4px solid var(--ok); }
+
+    /* ── Pixel grid ── */
+    .pixel-grid-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .pixel-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 3px;
+      width: min(260px, 80vw);
+    }
+    .pixel {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 3px;
+      background: var(--pixel-off);
+      border: 1px solid transparent;
+      cursor: default;
+      transition: background .15s, transform .1s;
+      position: relative;
+    }
+    .pixel.on           { background: var(--pixel-on); }
+    .pixel.bad          { background: var(--bad); animation: pulse .6s ease infinite alternate; }
+    .pixel.highlight-ok { background: var(--ok); }
+    .pixel.new-on {
+      background: #6ec6f5;   /* bleu clair visible en dessous */
+      position: relative;
+      overflow: hidden;
+    }
+    .pixel.new-on::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--bad);
+      border-radius: inherit;
+      animation: pulse-overlay .6s ease infinite alternate;
+    }
+    .pixel.clickable    { cursor: pointer; }
+    .pixel.clickable:hover { transform: scale(1.15); z-index:2; }
+
+    @keyframes pulse { from { opacity:1; } to { opacity:.5; } }
+    @keyframes pulse-overlay { from { opacity:.85; } to { opacity:0; } }
+
+    .digit-label {
+      font-family: var(--font-head);
+      font-size: 2rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* ── Rule display ── */
+    .rule-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--text);
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .rule-box .cond { color: var(--accent); }
+    .rule-box .op   { color: var(--muted); }
+    .rule-box .then { color: var(--ok); font-weight: 700; }
+    .rule-box .fail { color: var(--bad); }
+    .rule-counter {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--muted);
+      margin: 8px 0;
+    }
+    .rule-counter span { color: var(--accent); font-weight: 700; font-size: 18px; }
+
+    /* ── Comparison grid ── */
+    .compare-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin: 24px 0;
+    }
+    @media (max-width: 560px) { .compare-wrap { grid-template-columns: 1fr; } }
+    .compare-label {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .compare-label strong { color: var(--text); }
+
+    /* ── MCQ ── */
+    .mcq { margin: 20px 0; }
+    .mcq-prompt {
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    .mcq-opts { display: flex; flex-direction: column; gap: 10px; }
+    .mcq-opt {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .mcq-opt:hover { border-color: var(--accent); background: #1a2540; }
+    .mcq-opt.correct { border-color: var(--ok); background: #0e2a1a; color: var(--ok); }
+    .mcq-opt.wrong   { border-color: var(--bad); background: #2a0e0e; color: var(--bad); }
+    .mcq-opt.disabled { pointer-events: none; }
+    .mcq-letter {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14px;
+      min-width: 22px;
+      color: var(--accent);
+    }
+    .mcq-feedback {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-size: 15px;
+      display: none;
+    }
+    .mcq-feedback.show { display: block; }
+    .mcq-feedback.ok  { background: #0e2a1a; border: 1px solid var(--ok);  color: #a0f0c0; }
+    .mcq-feedback.bad { background: #2a0e0e; border: 1px solid var(--bad); color: #f0a0a0; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 28px;
+      border-radius: 999px;
+      font-size: 15px; font-weight: 600;
+      border: none; cursor: pointer;
+      transition: opacity .2s, transform .15s;
+      text-decoration: none;
+    }
+    .btn:hover { opacity: .88; transform: translateY(-1px); }
+    .btn:active { transform: none; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--text); }
+    .btn:disabled { opacity: .35; pointer-events: none; }
+
+    .btn-row {
+      margin-top: 32px;
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    }
+
+    /* ── Tooltip pixel ── */
+    .pixel-tooltip {
+      position: fixed;
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text);
+      pointer-events: none;
+      z-index: 200;
+      display: none;
+      white-space: nowrap;
+    }
+
+    /* ── Explosion stats ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin: 24px 0;
+    }
+    @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } }
+    .stat-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 18px;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: var(--font-head);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: block;
+    }
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── Transition screen ── */
+    .transition-hero {
+      text-align: center;
+      padding: 48px 0;
+    }
+    .transition-icon {
+      font-size: 4rem;
+      display: block;
+      margin-bottom: 24px;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-12px); }
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Divider ── */
+    hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+    /* ── Info box ── */
+    .info-box {
+      background: #111928;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 16px 20px;
+      margin: 16px 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .info-box strong { color: var(--text); }
+
+    /* ── Two-digit compare for S1.3 ── */
+    .diff-legend {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      font-size: 13px; color: var(--muted);
+      margin-top: 10px; justify-content: center;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+
+    /* ── Anim counter ── */
+    .count-anim { transition: color .3s; }
+  </style>
+</head>
+<body>
+
+<!-- Progress -->
+<div class="progress-bar-wrap">
+  <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+</div>
+<div class="progress-label" id="progressLabel">Écran 1 / 5</div>
+
+<!-- Tooltip global -->
+<div class="pixel-tooltip" id="pixelTooltip"></div>
+
+<!-- ══════════════════════════════════════════════
+     ÉCRAN 0 — Introduction / accroche
+══════════════════════════════════════════════ -->
+<div class="screen active" id="s0">
+  <div class="container">
+    <span class="badge badge-phase">Phase 1 · Approche symbolique</span>
+
+    <h1>Comment expliquer à un ordinateur que voici un&nbsp;<em>3</em>&nbsp;?</h1>
+
+    <p>Avant l'avènement du machine learning, les informaticiens devaient programmer la connaissance <strong>à la main</strong>, sous forme de règles explicites. C'est ce qu'on appelle l'<strong>approche symbolique</strong>, ou encore les <em>systèmes experts</em>.</p>
+
+    <p>Dans cette activité, vous allez incarner cet ingénieur des années 1980 qui tente d'écrire un programme pour reconnaître les chiffres écrits à la main. L'exercice va révéler pourquoi cette tâche, intuitivement simple pour un humain, s'avère <strong>fondamentalement impossible</strong> à résoudre par des règles.</p>
+
+    <div class="card card-accent">
+      <h3>🎯 Objectif de la phase</h3>
+      <p style="margin:0">Comprendre pourquoi la reconnaissance de l'écriture manuscrite échappe à la logique des règles explicites, et comment cela motive une approche radicalement différente&nbsp;: <strong>l'apprentissage à partir des données</strong>.</p>
+    </div>
+
+    <div class="card">
+      <h3>📐 Notre représentation</h3>
+      <p>Pour simplifier, nous allons représenter chaque chiffre par une image en <strong>noir et blanc de 10 × 10 pixels</strong>. Chaque pixel vaut&nbsp;1 (noir) ou&nbsp;0 (blanc), ce qui donne 100 valeurs binaires par image.</p>
+      <div class="pixel-grid-wrap" style="margin-top:16px">
+        <div class="pixel-grid" id="introGrid"></div>
+        <div class="digit-label">&#8203;</div>
+        <p style="text-align:center;color:var(--muted);font-size:13px;margin:0">Un chiffre « 3 » en 10×10 pixels</p>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goTo(1)">Commencer l'exploration →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ÉCRAN 1 — La règle pour une police fixe
+══════════════════════════════════════════════ -->
+<div class="screen" id="s1">
+  <div class="container">
+    <span class="badge badge-phase">Étape 1 · La règle symbolique</span>
+
+    <h2>Écrire la règle pour un « 3 » parfait</h2>
+
+    <p>Un ingénieur symboliste se dit : <em>"je vais regarder les pixels un par un et écrire une condition pour chacun."</em></p>
+
+    <p>Voici un « 3 » affiché dans une police monospace fixe, 10×10 pixels. <strong>Survolez les pixels noirs</strong> pour voir la condition logique correspondante s'ajouter à la règle.</p>
+
+    <div class="card" style="padding:16px">
+      <div class="compare-wrap" style="align-items:flex-start">
+        <div>
+          <div class="compare-label"><strong>Image 10×10</strong><br>Police fixe</div>
+          <div class="pixel-grid-wrap">
+            <div class="pixel-grid" id="ruleGrid"></div>
+          </div>
+        </div>
+        <div style="flex:1">
+          <div class="rule-counter">Conditions dans la règle&nbsp;: <span id="condCount">0</span></div>
+          <div class="rule-box" id="ruleBox">
+            <span style="color:var(--muted);font-style:italic">Survolez les pixels noirs pour construire la règle...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mcq" id="mcq1">
+      <div class="mcq-prompt">Combien de conditions devrait comporter une règle complète pour ce seul chiffre « 3 » dans cette police ?</div>
+      <div class="mcq-opts">
+        <div class="mcq-opt" onclick="answer(this,'mcq1','A')"><span class="mcq-letter">A</span>Environ 10 conditions (les pixels du contour)</div>
+        <div class="mcq-opt" onclick="answer(this,'mcq1','B')"><span class="mcq-letter">B</span>Environ 30 conditions (les pixels noirs seulement)</div>
+        <div class="mcq-opt" onclick="answer(this,'mcq1','C')"><span class="mcq-letter">C</span>100 conditions (un état — noir ou blanc — pour chaque pixel)</div>
+      </div>
+      <div class="mcq-feedback" id="fb-mcq1"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn1" onclick="goTo(2)" disabled>Étape suivante →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ÉCRAN 2 — Une deuxième police : la règle échoue
+══════════════════════════════════════════════ -->
+<div class="screen" id="s2">
+  <div class="container">
+    <span class="badge badge-phase">Étape 2 · Le mur</span>
+
+    <h2>La même règle, une autre police&nbsp;: catastrophe</h2>
+
+    <p>Notre règle fonctionne parfaitement pour le « 3 » de la police A. Voici maintenant le <strong>même chiffre « 3 »</strong> dans une police légèrement différente (police B). Les deux images représentent bien un « 3 » — mais leurs pixels ne sont pas identiques.</p>
+
+    <!-- ÉTAPE 2a : les deux polices côte à côte, propres -->
+    <div class="compare-wrap" id="compareClean">
+      <div>
+        <div class="compare-label"><strong>Police A</strong><br><span style="color:var(--ok)">✓ Règle écrite pour cette police</span></div>
+        <div class="pixel-grid-wrap">
+          <div class="pixel-grid" id="policeA"></div>
+        </div>
+      </div>
+      <div>
+        <div class="compare-label"><strong>Police B</strong><br><span style="color:var(--muted)">Le même « 3 », une autre typographie</span></div>
+        <div class="pixel-grid-wrap">
+          <div class="pixel-grid" id="policeB_clean"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bouton déclencheur -->
+    <div class="btn-row" id="applyRuleRow">
+      <button class="btn btn-primary" onclick="applyRule()">⚙️ Appliquer la règle de A sur le « 3 » de B →</button>
+    </div>
+
+    <!-- ÉTAPE 2b : résultat de l'application de la règle (caché au départ) -->
+    <div id="ruleResultSection" style="display:none">
+      <hr>
+      <h2 style="color:var(--accent2)">Résultat&nbsp;: la règle de A appliquée à B</h2>
+      <p>La règle attend les pixels exacts de la police A. Voici ce qu'elle constate pixel par pixel sur le « 3 » de la police B&nbsp;:</p>
+
+      <div class="compare-wrap">
+        <div>
+          <div class="compare-label"><strong>Police A</strong><br><span style="color:var(--ok)">✓ Référence de la règle</span></div>
+          <div class="pixel-grid-wrap">
+            <div class="pixel-grid" id="policeA_ref"></div>
+          </div>
+        </div>
+        <div>
+          <div class="compare-label"><strong>Police B — vue par la règle</strong><br><span style="color:var(--bad)">✗ Pixels en échec (clignotants)</span></div>
+          <div class="pixel-grid-wrap">
+            <div class="pixel-grid" id="policeB_rule"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diff-legend" style="margin-top:12px">
+        <span><span class="legend-dot" style="background:var(--pixel-on)"></span>Pixel correct (règle satisfaite)</span>
+        <span><span class="legend-dot" style="background:var(--bad)"></span>Pixel attendu noir → absent dans B</span>
+        <span><span class="legend-dot" style="background:linear-gradient(135deg,var(--bad) 50%,#6ec6f5 50%)"></span>Pixel inattendu → présent dans B, non prévu par la règle</span>
+      </div>
+
+      <div class="card card-warn" style="margin-top:20px">
+        <h3>🔍 Analyse des différences</h3>
+        <p id="diffText">Calcul en cours…</p>
+      </div>
+
+      <!-- Raisonnement narratif progressif -->
+      <div class="card card-accent" style="margin-top:8px">
+        <h3>🛠️ Que fait l'ingénieur&nbsp;?</h3>
+        <p>Il pourrait corriger la règle&nbsp;: identifier les pixels en trop et les pixels manquants, et ajuster les conditions une par une. Pour passer de la police A à la police B sur le seul chiffre «&nbsp;3&nbsp;», cela représente environ <strong>10 modifications</strong> à la règle.</p>
+        <p style="margin:0">Faisable, non&nbsp;? Voyons ce que ça donne à l'échelle réelle…</p>
+      </div>
+
+      <div class="card" id="scaleCard" style="margin-top:8px">
+        <h3>📐 À l'échelle de toutes les polices</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:12px">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border);color:var(--muted)">
+              <th style="text-align:left;padding:6px 8px">Paramètre</th>
+              <th style="text-align:right;padding:6px 8px">Valeur</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:6px 8px">Modifications par chiffre et par police</td>
+              <td style="text-align:right;padding:6px 8px;font-family:var(--font-mono)">~10</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:6px 8px">Chiffres à gérer (0 à 9)</td>
+              <td style="text-align:right;padding:6px 8px;font-family:var(--font-mono)">× 10</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:6px 8px">Polices de caractères existantes</td>
+              <td style="text-align:right;padding:6px 8px;font-family:var(--font-mono)">× ~100 000</td>
+            </tr>
+            <tr style="background:var(--surface2)">
+              <td style="padding:8px;font-weight:700;color:var(--accent2)">Total de modifications à effectuer</td>
+              <td style="text-align:right;padding:8px;font-family:var(--font-mono);font-weight:700;color:var(--accent2);font-size:1.1em">= 10 000 000</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>Dix millions de modifications — et encore, c'est uniquement pour les polices typographiques <em>fixes</em>. On n'a pas encore abordé l'écriture manuscrite, où chaque personne écrit différemment selon le jour, la fatigue, le stylo…</p>
+        <p>Et surtout&nbsp;: <strong>dès qu'une nouvelle police apparaît, il faut recommencer le travail pour elle</strong>. Le système n'apprend rien — il ne fait qu'accumuler des règles au cas par cas.</p>
+      </div>
+
+      <div class="card" style="border-left:4px solid var(--bad);margin-top:8px">
+        <h3 style="color:var(--bad)">✗ Verdict&nbsp;: l'approche symbolique ne tient pas</h3>
+        <p>Le problème n'est pas le nombre de conditions à écrire — c'est que cette approche <strong>ne généralise pas</strong>. Chaque nouvelle police (ou chaque nouvelle écriture) exige un travail manuel complet depuis le début. Il n'y a aucun mécanisme permettant au système de s'adapter de lui-même.</p>
+        <p style="margin:0">Un enfant de 5 ans reconnaît les chiffres après quelques dizaines d'exemples, quelle que soit la police. Un ingénieur symboliste n'en finira jamais.</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn2" onclick="goTo(3)">Vers l'explosion combinatoire →</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ÉCRAN 3 — L'explosion combinatoire
+══════════════════════════════════════════════ -->
+<div class="screen" id="s3">
+  <div class="container">
+    <span class="badge badge-phase">Étape 3 · L'explosion combinatoire</span>
+
+    <h2>À quelle échelle se pose le problème réel&nbsp;?</h2>
+
+    <p>Dans la vie réelle, un programme de reconnaissance de chiffres doit fonctionner sur l'écriture de <em>n'importe quel humain</em>, avec ses variations personnelles, son stylo, sa fatigue, son angle d'inclinaison…</p>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-num" id="statChiffres">0</span>
+        <div class="stat-label">chiffres différents (0 à 9)</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num" id="statVariantes">0</span>
+        <div class="stat-label">variantes d'écriture par chiffre (estimation basse)</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num" id="statPixels">0</span>
+        <div class="stat-label">pixels à spécifier par règle</div>
+      </div>
+    </div>
+
+    <div class="card card-warn" id="explosionCard" style="display:none">
+      <h3>⚠️ Conséquence</h3>
+      <p>Il faudrait écrire et maintenir <strong id="totalRules">~10 000 règles</strong>, chacune composée de 100 conditions. Soit environ <strong id="totalConds">1 000 000 conditions logiques</strong>. Et encore, sans tenir compte des niveaux de gris, du bruit, des rotations ou de l'écriture cursive.</p>
+      <p style="margin:0">Un enfant de 5 ans reconnaît les chiffres après quelques dizaines d'exemples. Un système expert ne le pourra jamais vraiment.</p>
+    </div>
+
+    <div class="mcq" id="mcq3">
+      <div class="mcq-prompt">Parmi ces affirmations, laquelle décrit le mieux la limite fondamentale de l'approche symbolique pour ce problème ?</div>
+      <div class="mcq-opts">
+        <div class="mcq-opt" onclick="answer(this,'mcq3','A')"><span class="mcq-letter">A</span>Les ordinateurs des années 1980 n'étaient pas assez puissants pour exécuter ces règles</div>
+        <div class="mcq-opt" onclick="answer(this,'mcq3','B')"><span class="mcq-letter">B</span>Il est impossible de lister exhaustivement toutes les variations de l'écriture humaine sous forme de règles</div>
+        <div class="mcq-opt" onclick="answer(this,'mcq3','C')"><span class="mcq-letter">C</span>Les règles logiques ne peuvent pas traiter des données binaires comme des pixels</div>
+      </div>
+      <div class="mcq-feedback" id="fb-mcq3"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn3" onclick="goTo(4)" disabled>Conclusion →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ÉCRAN 4 — Transition / conclusion
+══════════════════════════════════════════════ -->
+<div class="screen" id="s4">
+  <div class="container">
+    <div class="transition-hero">
+      <span class="transition-icon">🧠</span>
+      <h1>Et si la machine apprenait d'elle-même&nbsp;?</h1>
+    </div>
+
+    <p>Vous venez de toucher du doigt la limite fondamentale de l'approche symbolique : <strong>la connaissance ne peut pas toujours être écrite explicitement.</strong></p>
+
+    <div class="card card-accent">
+      <h3>🔑 Ce que vous avez découvert</h3>
+      <ul style="padding-left:20px;line-height:2">
+        <li>Une règle symbolique pour un chiffre dans une police fixe est <strong>précise mais fragile</strong> : elle ne tient que si les pixels sont exactement ceux attendus.</li>
+        <li>Changer de police (ou d'écriture) invalide la règle. Il faudrait <strong>une règle par variante</strong>.</li>
+        <li>La variabilité de l'écriture humaine est <strong>impossible à inventorier</strong> exhaustivement.</li>
+        <li>Le problème n'est pas computationnel (puissance de calcul) — il est <em>fondamentalement épistémique</em> : on ne sait pas <em>formuler</em> ce que l'on sait faire.</li>
+      </ul>
+    </div>
+
+    <hr>
+
+    <div class="card">
+      <h3>🔁 Approche connexionniste — la promesse</h3>
+      <p>L'idée révolutionnaire : au lieu d'écrire les règles, on va <strong>montrer des exemples</strong> au programme, et le laisser <em>inférer lui-même</em> ce qui caractérise un « 3 ».</p>
+      <p>Ce programme qui apprend à partir des données s'appelle un <strong>réseau de neurones artificiel</strong>. Dans la Phase 2, nous allons en construire un pas à pas.</p>
+    </div>
+
+    <div class="info-box">
+      <strong>Note historique :</strong> C'est précisément ce constat — l'impossibilité pratique des systèmes experts pour la perception — qui a motivé le renouveau du connexionnisme dans les années 1980-1990, menant directement aux algorithmes qui font fonctionner vos téléphones aujourd'hui.
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goTo(0)">← Revoir depuis le début</button>
+      <button class="btn btn-primary" onclick="window.close()">Quitter l'activité ✕</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────────────────────
+// DATA — Pixels 10×10 pour le chiffre « 3 »
+// Police A : classique
+// Police B : légèrement différente
+// ──────────────────────────────────────────────
+
+const POLICE_A = [
+  0,1,1,1,1,1,1,1,0,0,
+  0,0,0,0,0,0,0,1,1,0,
+  0,0,0,0,0,0,0,1,1,0,
+  0,0,0,1,1,1,1,1,0,0,
+  0,0,0,1,1,1,1,1,0,0,
+  0,0,0,0,0,0,0,1,1,0,
+  0,0,0,0,0,0,0,1,1,0,
+  0,0,0,0,0,0,0,1,1,0,
+  0,1,1,1,1,1,1,1,0,0,
+  0,0,0,0,0,0,0,0,0,0,
+];
+
+const POLICE_B = [
+  0,0,1,1,1,1,1,1,0,0,
+  0,0,0,0,0,0,1,1,1,0,
+  0,0,0,0,0,0,0,1,1,0,
+  0,0,1,1,1,1,1,1,0,0,
+  0,0,1,1,1,1,1,1,0,0,
+  0,0,0,0,0,0,0,1,1,0,
+  0,0,0,0,0,0,1,1,0,0,
+  0,0,0,0,0,1,1,1,0,0,
+  0,0,1,1,1,1,1,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,
+];
+
+// ──────────────────────────────────────────────
+// SCREEN NAVIGATION
+// ──────────────────────────────────────────────
+const TOTAL_SCREENS = 5;
+let currentScreen = 0;
+
+function goTo(n) {
+  document.getElementById('s' + currentScreen).classList.remove('active');
+  currentScreen = n;
+  document.getElementById('s' + n).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  updateProgress(n);
+  if (n === 2) initScreen2();
+  if (n === 3) initScreen3();
+}
+
+function updateProgress(n) {
+  const pct = Math.round((n / (TOTAL_SCREENS - 1)) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = 'Écran ' + (n + 1) + ' / ' + TOTAL_SCREENS;
+}
+
+// ──────────────────────────────────────────────
+// PIXEL GRID BUILDER
+// ──────────────────────────────────────────────
+function buildGrid(containerId, pixels, options = {}) {
+  const grid = document.getElementById(containerId);
+  grid.innerHTML = '';
+  pixels.forEach((val, i) => {
+    const div = document.createElement('div');
+    div.className = 'pixel' + (val ? ' on' : '');
+    if (options.clickable) div.classList.add('clickable');
+    if (options.onMouseEnter) div.addEventListener('mouseenter', (e) => options.onMouseEnter(i, val, e));
+    if (options.onMouseLeave) div.addEventListener('mouseleave', options.onMouseLeave);
+    if (options.onClick) div.addEventListener('click', () => options.onClick(i, val));
+    grid.appendChild(div);
+  });
+}
+
+function getPixelDivs(containerId) {
+  return document.getElementById(containerId).querySelectorAll('.pixel');
+}
+
+// ──────────────────────────────────────────────
+// ÉCRAN 0 — Intro grid (static display)
+// ──────────────────────────────────────────────
+buildGrid('introGrid', POLICE_A);
+
+// ──────────────────────────────────────────────
+// ÉCRAN 1 — Rule builder
+// ──────────────────────────────────────────────
+let hoveredPixels = new Set();
+
+function rowCol(i) { return { r: Math.floor(i / 10) + 1, c: (i % 10) + 1 }; }
+
+function buildRuleGrid() {
+  buildGrid('ruleGrid', POLICE_A, {
+    clickable: true,
+    onMouseEnter: (i, val, e) => {
+      if (!val) return; // only react on black pixels
+      if (hoveredPixels.has(i)) return;
+      hoveredPixels.add(i);
+      updateRuleBox();
+      // tooltip
+      const { r, c } = rowCol(i);
+      const tt = document.getElementById('pixelTooltip');
+      tt.textContent = `pixel(${r}, ${c}) = 1`;
+      tt.style.display = 'block';
+      tt.style.left = (e.clientX + 12) + 'px';
+      tt.style.top  = (e.clientY - 28) + 'px';
+    },
+    onMouseLeave: () => {
+      document.getElementById('pixelTooltip').style.display = 'none';
+    }
+  });
+  document.getElementById('ruleGrid').addEventListener('mousemove', (e) => {
+    const tt = document.getElementById('pixelTooltip');
+    if (tt.style.display === 'block') {
+      tt.style.left = (e.clientX + 12) + 'px';
+      tt.style.top  = (e.clientY - 28) + 'px';
+    }
+  });
+}
+
+function updateRuleBox() {
+  const count = hoveredPixels.size;
+  document.getElementById('condCount').textContent = count;
+
+  const lines = [];
+  [...hoveredPixels].forEach((i, idx) => {
+    const { r, c } = rowCol(i);
+    const op = idx === 0 ? '' : '<span class="op">ET </span>';
+    lines.push(`${op}<span class="cond">pixel(${String(r).padStart(2,' ')}, ${String(c).padStart(2,' ')}) = 1</span>`);
+  });
+
+  const onPixels = POLICE_A.filter(v => v).length;
+  if (count >= onPixels) {
+    lines.push(`<span class="then">⟹ ALORS c'est un « 3 »</span>`);
+  }
+
+  document.getElementById('ruleBox').innerHTML = lines.join('<br>') || '<span style="color:var(--muted);font-style:italic">Survolez les pixels noirs pour construire la règle...</span>';
+}
+
+buildRuleGrid();
+
+// ──────────────────────────────────────────────
+// MCQ ENGINE
+// ──────────────────────────────────────────────
+const MCQ_ANSWERS = {
+  mcq1: { correct: 'C', feedbackOk: '✓ Exact ! Une règle symbolique rigoureuse doit spécifier l\'état de <em>chaque</em> pixel : 1 (noir) ou 0 (blanc). Avec 10×10 = 100 pixels, cela donne 100 conditions. Et ce, rien que pour un chiffre dans une seule police !', feedbackBad: '✗ Pas tout à fait. Pour être précise, la règle doit indiquer si chaque pixel est noir (1) <em>ou</em> blanc (0) — sinon comment distinguer un « 3 » d\'un « 8 » ? Il faut donc 100 conditions (une par pixel).', nextBtn: 'btn1' },
+  mcq3: { correct: 'B', feedbackOk: '✓ Parfaitement formulé. La puissance de calcul n\'est pas le problème : même avec un super-ordinateur, si on ne <em>sait pas écrire</em> une règle qui couvre toutes les variantes de l\'écriture humaine, la machine ne peut pas faire mieux. C\'est une limite de <em>représentation</em>, pas de performance.', feedbackBad: '✗ Ce n\'est pas le cœur du problème. L\'approche symbolique échoue non pas par manque de puissance, mais parce qu\'il est <em>impossible en principe</em> de dresser la liste de toutes les façons dont un humain peut écrire un « 3 ».', nextBtn: 'btn3' },
+};
+
+function answer(el, mcqId, choice) {
+  const { correct, feedbackOk, feedbackBad, nextBtn } = MCQ_ANSWERS[mcqId];
+  const opts = el.closest('.mcq-opts').querySelectorAll('.mcq-opt');
+  opts.forEach(o => o.classList.add('disabled'));
+  const fb = document.getElementById('fb-' + mcqId);
+  if (choice === correct) {
+    el.classList.add('correct');
+    fb.className = 'mcq-feedback show ok';
+    fb.innerHTML = feedbackOk;
+  } else {
+    el.classList.add('wrong');
+    fb.className = 'mcq-feedback show bad';
+    fb.innerHTML = feedbackBad;
+    // highlight correct
+    opts[['A','B','C'].indexOf(correct)].classList.add('correct');
+  }
+  if (nextBtn) document.getElementById(nextBtn).disabled = false;
+}
+
+// ──────────────────────────────────────────────
+// ÉCRAN 2 — Police comparison (deux étapes)
+// ──────────────────────────────────────────────
+function initScreen2() {
+  // Étape 2a : afficher les deux polices propres côte à côte
+  buildGrid('policeA', POLICE_A);
+  buildGrid('policeB_clean', POLICE_B);
+}
+
+function applyRule() {
+  // Cacher le bouton déclencheur
+  document.getElementById('applyRuleRow').style.display = 'none';
+
+  // Révéler la section résultat avec animation
+  const section = document.getElementById('ruleResultSection');
+  section.style.display = 'block';
+  section.style.animation = 'fadeIn .5s ease';
+
+  // Police A de référence (propre)
+  buildGrid('policeA_ref', POLICE_A);
+
+  // Police B vue par la règle : pixels colorés + clignotants pour les échecs
+  const grid = document.getElementById('policeB_rule');
+  grid.innerHTML = '';
+  let missing = 0, extra = 0;
+
+  POLICE_B.forEach((val, i) => {
+    const div = document.createElement('div');
+    div.className = 'pixel';
+    const aVal = POLICE_A[i];
+
+    if (aVal && val) {
+      // Pixel attendu noir ET présent dans B → correct
+      div.classList.add('on');
+    } else if (aVal && !val) {
+      // Règle attend noir, B a blanc → ÉCHEC : clignotant rouge
+      div.classList.add('bad');
+      missing++;
+    } else if (!aVal && val) {
+      // Règle attend blanc, B a noir → inattendu (vert)
+      div.classList.add('new-on');
+      extra++;
+    }
+    // Si aVal=0 et val=0 → blanc attendu, blanc trouvé → rien (pixel off)
+
+    grid.appendChild(div);
+  });
+
+  // Scroll doux vers le résultat
+  setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+
+  document.getElementById('diffText').innerHTML =
+    `La règle de A attendait <strong style="color:var(--bad)">${missing} pixels noirs</strong> qui sont absents dans B (pixels clignotants en rouge).
+    De plus, <strong style="color:var(--ok)">${extra} pixels noirs</strong> apparaissent dans B sans être prévus par la règle.<br><br>
+    Résultat : la règle écrite pour la police A <strong>rejette le « 3 » de la police B</strong>. Pour un système expert, c'est un échec complet — et pourtant, c'est bien un « 3 » !`;
+}
+
+// ──────────────────────────────────────────────
+// ÉCRAN 3 — Explosion combinatoire (counter anim)
+// ──────────────────────────────────────────────
+function initScreen3() {
+  animateCount('statChiffres', 10, 800);
+  setTimeout(() => animateCount('statVariantes', 1000, 1200, '+'), 400);
+  setTimeout(() => animateCount('statPixels', 100, 600), 800);
+  setTimeout(() => {
+    document.getElementById('explosionCard').style.display = 'block';
+    document.getElementById('explosionCard').style.animation = 'fadeIn .5s ease';
+  }, 1800);
+}
+
+function animateCount(id, target, duration, suffix = '') {
+  const el = document.getElementById(id);
+  const start = performance.now();
+  function step(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(ease * target) + suffix;
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+</script>
+</body>
+</html>
