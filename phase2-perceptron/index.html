@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reconnaissance de chiffres — Phase 2 : Le perceptron multicouche</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" />
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+
+  <style>
+    :root {
+      --bg:        #0f1117;
+      --surface:   #181c27;
+      --surface2:  #1e2438;
+      --border:    #2a3050;
+      --accent:    #4f8ef7;
+      --accent2:   #f7794f;
+      --ok:        #3ecf7a;
+      --bad:       #f75a5a;
+      --text:      #e8ecf5;
+      --muted:     #7a85a3;
+      --pixel-on:  #4f8ef7;
+      --pixel-off: #1e2438;
+      --font-head: 'Georgia', 'Times New Roman', serif;
+      --font-body: 'Segoe UI', system-ui, sans-serif;
+      --font-mono: 'Courier New', monospace;
+      --r: 10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    .screen { display: none; min-height: 100vh; padding: 48px 24px; animation: fadeIn .5s ease; }
+    .screen.active { display: block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+
+    .container { max-width: 820px; margin: 0 auto; }
+
+    .progress-bar-wrap { position: fixed; top:0; left:0; right:0; height:4px; background:var(--border); z-index:100; }
+    .progress-bar-fill { height:100%; background:var(--accent); transition:width .5s ease; }
+    .progress-label { position:fixed; top:10px; right:16px; font-size:12px; color:var(--muted); font-family:var(--font-mono); z-index:100; }
+
+    h1 { font-family:var(--font-head); font-size:clamp(1.6rem,4vw,2.4rem); font-weight:700; margin-bottom:12px; line-height:1.2; }
+    h2 { font-family:var(--font-head); font-size:clamp(1.2rem,3vw,1.7rem); margin-bottom:16px; }
+    h3 { font-size:1.05rem; font-weight:600; color:var(--accent); margin-bottom:8px; text-transform:uppercase; letter-spacing:.08em; font-family:var(--font-mono); }
+    p { margin-bottom:14px; }
+    strong { color:var(--text); }
+    em { color:var(--accent); font-style:normal; font-weight:600; }
+
+    .badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:12px; font-family:var(--font-mono); font-weight:600; margin-bottom:20px; }
+    .badge-phase { background:#1a2540; color:var(--accent); border:1px solid var(--border); }
+
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:24px; margin:20px 0; }
+    .card-accent { border-left:4px solid var(--accent); }
+    .card-warn   { border-left:4px solid var(--accent2); }
+    .card-ok     { border-left:4px solid var(--ok); }
+
+    .btn { display:inline-flex; align-items:center; gap:8px; padding:12px 28px; border-radius:999px; font-size:15px; font-weight:600; border:none; cursor:pointer; transition:opacity .2s,transform .15s; text-decoration:none; }
+    .btn:hover { opacity:.88; transform:translateY(-1px); }
+    .btn:active { transform:none; }
+    .btn-primary { background:var(--accent); color:#fff; }
+    .btn-secondary { background:transparent; border:1px solid var(--border); color:var(--muted); }
+    .btn-secondary:hover { border-color:var(--accent); color:var(--text); }
+    .btn:disabled { opacity:.35; pointer-events:none; }
+    .btn-row { margin-top:32px; display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+
+    hr { border:none; border-top:1px solid var(--border); margin:32px 0; }
+
+    .info-box { background:#111928; border:1px solid var(--border); border-radius:var(--r); padding:16px 20px; margin:16px 0; font-size:14px; color:var(--muted); }
+    .info-box strong { color:var(--text); }
+
+    /* ── MCQ ── */
+    .mcq { margin:20px 0; }
+    .mcq-prompt { font-weight:600; margin-bottom:12px; color:var(--text); }
+    .mcq-opts { display:flex; flex-direction:column; gap:10px; }
+    .mcq-opt { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px 16px; cursor:pointer; transition:border-color .2s,background .2s; display:flex; gap:12px; align-items:flex-start; }
+    .mcq-opt:hover { border-color:var(--accent); background:#1a2540; }
+    .mcq-opt.correct { border-color:var(--ok); background:#0e2a1a; color:var(--ok); }
+    .mcq-opt.wrong   { border-color:var(--bad); background:#2a0e0e; color:var(--bad); }
+    .mcq-opt.disabled { pointer-events:none; }
+    .mcq-letter { font-family:var(--font-mono); font-weight:700; font-size:14px; min-width:22px; color:var(--accent); }
+    .mcq-feedback { margin-top:14px; padding:14px 16px; border-radius:8px; font-size:15px; display:none; }
+    .mcq-feedback.show { display:block; }
+    .mcq-feedback.ok  { background:#0e2a1a; border:1px solid var(--ok);  color:#a0f0c0; }
+    .mcq-feedback.bad { background:#2a0e0e; border:1px solid var(--bad); color:#f0a0a0; }
+
+    /* ── Pixel grid ── */
+    .pixel-grid { display:grid; grid-template-columns:repeat(10,1fr); gap:3px; width:min(220px,70vw); }
+    .pixel { width:100%; aspect-ratio:1; border-radius:3px; background:var(--pixel-off); transition:background .15s; }
+    .pixel.on { background:var(--pixel-on); }
+    .pixel.weight-pos { background:var(--ok); }
+    .pixel.weight-neg { background:var(--bad); }
+    .pixel.weight-neu { background:var(--pixel-off); }
+
+    /* ── Network SVG canvas ── */
+    #networkCanvas { width:100%; border-radius:var(--r); display:block; }
+
+    /* ── Zoom panel ── */
+    .zoom-panel {
+      background:var(--surface2);
+      border:1px solid var(--accent);
+      border-radius:var(--r);
+      padding:20px;
+      margin-top:20px;
+      display:none;
+      animation:fadeIn .4s ease;
+    }
+    .zoom-panel.show { display:block; }
+    .zoom-grid {
+      display:flex;
+      gap:24px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+    }
+    .zoom-neuron {
+      width:48px; height:48px;
+      border-radius:50%;
+      background:var(--accent);
+      border:3px solid #fff;
+      display:flex; align-items:center; justify-content:center;
+      font-family:var(--font-mono); font-size:12px; color:#fff; font-weight:700;
+      flex-shrink:0;
+    }
+    .zoom-inputs {
+      display:flex; flex-direction:column; gap:6px; flex:1;
+    }
+    .zoom-input-row {
+      display:flex; align-items:center; gap:10px;
+      font-size:13px; font-family:var(--font-mono);
+    }
+    .zoom-pixel {
+      width:20px; height:20px; border-radius:3px;
+      background:var(--pixel-off); flex-shrink:0;
+      border:1px solid var(--border);
+    }
+    .zoom-pixel.on { background:var(--pixel-on); }
+    .zoom-w { color:var(--accent); min-width:50px; }
+    .zoom-arrow { color:var(--muted); font-size:18px; }
+    .zoom-sum-box {
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:12px 16px;
+      font-family:var(--font-mono);
+      font-size:13px;
+      margin-top:12px;
+    }
+
+    /* ── Tooltip sigmoïde ── */
+    .tooltip-wrap { position:relative; display:inline; }
+    .tooltip-trigger {
+      color:var(--accent);
+      font-weight:600;
+      border-bottom:1px dashed var(--accent);
+      cursor:help;
+    }
+    .tooltip-box {
+      display:none;
+      position:absolute;
+      bottom:calc(100% + 10px);
+      left:50%; transform:translateX(-50%);
+      background:var(--surface);
+      border:1px solid var(--accent);
+      border-radius:var(--r);
+      padding:14px;
+      z-index:200;
+      width:260px;
+      box-shadow:0 8px 32px #0008;
+    }
+    .tooltip-wrap:hover .tooltip-box { display:block; }
+    .tooltip-box canvas { display:block; margin:0 auto; }
+    .tooltip-box p { font-size:12px; color:var(--muted); margin:8px 0 0; text-align:center; }
+
+    /* ── Neuron slider section ── */
+    .neuron-demo {
+      background:var(--surface2);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      padding:20px;
+      margin:16px 0;
+    }
+    .slider-row {
+      display:flex; align-items:center; gap:12px; margin:10px 0;
+      font-size:14px; font-family:var(--font-mono);
+    }
+    .slider-row label { min-width:80px; color:var(--muted); }
+    .slider-row input[type=range] {
+      flex:1;
+      accent-color:var(--accent);
+      cursor:pointer;
+    }
+    .slider-val { min-width:40px; text-align:right; color:var(--accent); font-weight:700; }
+    .pixel-demo { width:22px; height:22px; border-radius:3px; background:var(--pixel-off); flex-shrink:0; border:1px solid var(--border); }
+    .pixel-demo.on { background:var(--pixel-on); }
+
+    .output-bar-wrap {
+      margin-top:16px;
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:14px 16px;
+    }
+    .output-bar-label { font-size:13px; color:var(--muted); margin-bottom:8px; font-family:var(--font-mono); }
+    .output-bar-track { background:var(--surface2); border-radius:999px; height:18px; overflow:hidden; }
+    .output-bar-fill { height:100%; background:var(--accent); border-radius:999px; transition:width .3s ease; }
+    .output-val { font-family:var(--font-mono); font-size:1.4rem; font-weight:700; color:var(--accent); margin-top:8px; }
+    .output-interp { font-size:13px; color:var(--muted); margin-top:4px; }
+
+    /* ── Weight map ── */
+    .weight-map-wrap { display:flex; gap:24px; flex-wrap:wrap; justify-content:center; margin:16px 0; }
+    .weight-map-item { text-align:center; }
+    .weight-map-label { font-size:12px; color:var(--muted); font-family:var(--font-mono); margin-bottom:6px; }
+    .weight-grid { display:grid; grid-template-columns:repeat(10,1fr); gap:2px; width:min(160px,45vw); }
+    .weight-pixel { width:100%; aspect-ratio:1; border-radius:2px; }
+
+    /* ── Transition hero ── */
+    .transition-hero { text-align:center; padding:48px 0; }
+    .transition-icon { font-size:4rem; display:block; margin-bottom:24px; animation:float 3s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:var(--bg); }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+  </style>
+</head>
+<body>
+
+<div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+<div class="progress-label" id="progressLabel">Écran 1 / 5</div>
+
+<!-- ══════════════════════════════════════════════
+     ÉCRAN 0 — L'idée centrale
+══════════════════════════════════════════════ -->
+<div class="screen active" id="s0">
+  <div class="container">
+    <span class="badge badge-phase">Phase 2 · Le perceptron multicouche</span>
+
+    <h1>Et si on laissait la machine apprendre d'elle-même&nbsp;?</h1>
+
+    <p>La Phase 1 nous a montré l'impasse de l'approche symbolique&nbsp;: personne ne sait formuler explicitement ce qui fait qu'un chiffre est un « 3 ». Pourtant, tout humain le reconnaît instantanément.</p>
+
+    <p>L'idée fondamentale de l'approche connexionniste est radicalement différente&nbsp;: <em>au lieu d'écrire les règles, on montre des exemples au programme, et on le laisse trouver lui-même les régularités.</em></p>
+
+    <div class="card card-accent">
+      <h3>🧬 L'inspiration biologique</h3>
+      <p>Le cerveau humain contient environ 86 milliards de neurones. Chaque neurone reçoit des signaux électriques de milliers d'autres neurones, les additionne, et s'active — ou non — selon que cette somme dépasse un certain seuil.</p>
+      <p style="margin:0">C'est précisément ce mécanisme que le <strong>neurone artificiel</strong> cherche à reproduire, de façon mathématique et simplifiée.</p>
+    </div>
+
+    <div class="card">
+      <h3>⚙️ Le neurone artificiel — intuition</h3>
+      <p>Un neurone artificiel reçoit plusieurs valeurs en entrée (par exemple, les niveaux de gris des pixels d'une image). Il <strong>pondère</strong> chaque entrée par un coefficient — le <strong>poids</strong> — puis additionne le tout. Si la somme est suffisamment grande, il s'active.</p>
+      <p>La question clé est&nbsp;: <em>comment choisir ces poids ?</em></p>
+      <p style="margin:0">C'est là qu'intervient l'<strong>apprentissage</strong>&nbsp;: le réseau ajuste ses poids automatiquement, en voyant des milliers d'exemples d'images étiquetées.</p>
+    </div>
+
+    <div class="mcq" id="mcq0">
+      <div class="mcq-prompt">Dans cette approche, qui détermine les règles permettant de reconnaître un « 3 » ?</div>
+      <div class="mcq-opts">
+        <div class="mcq-opt" onclick="answer(this,'mcq0','A')"><span class="mcq-letter">A</span>Le programmeur, qui les code explicitement comme en Phase 1</div>
+        <div class="mcq-opt" onclick="answer(this,'mcq0','B')"><span class="mcq-letter">B</span>Le réseau lui-même, en ajustant ses poids à partir d'exemples</div>
+        <div class="mcq-opt" onclick="answer(this,'mcq0','C')"><span class="mcq-letter">C</span>L'utilisateur, qui indique au réseau quels pixels regarder</div>
+      </div>
+      <div class="mcq-feedback" id="fb-mcq0"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn0" onclick="goTo(1)" disabled>Voir l'architecture du réseau →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ÉCRAN 1 — Architecture (vue globale + zoom)
+══════════════════════════════════════════════ -->
+<div class="screen" id="s1">
+  <div class="container">
+    <span class="badge badge-phase">Étape 1 · Architecture du réseau</span>
+
+    <h2>Un réseau de neurones en trois couches</h2>
+
+    <p>Notre réseau est organisé en <strong>trois couches</strong> successives. L'information circule toujours de gauche à droite — des pixels bruts jusqu'à la décision finale.</p>
+
+    <div class="card" style="padding:16px">
+      <svg id="networkCanvas" viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+        <!-- Sera dessiné par JS -->
+      </svg>
+      <div style="display:flex;justify-content:center;gap:32px;margin-top:12px;font-size:12px;font-family:var(--font-mono);color:var(--muted);flex-wrap:wrap">
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#4f8ef7;vertical-align:middle;margin-right:5px"></span>Couche d'entrée (100 neurones)</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#f7794f;vertical-align:middle;margin-right:5px"></span>Couche cachée (16 neurones)</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#3ecf7a;vertical-align:middle;margin-right:5px"></span>Couche de sortie (10 neurones)</span>
+      </div>
+    </div>
+
+    <p>Chaque neurone de la couche cachée est <strong>connecté à toutes les entrées</strong> (100 pixels). Chaque neurone de la couche de sortie est connecté à tous les neurones cachés.</p>
+
+    <div class="info-box">
+      <strong>Cliquez sur un neurone de la couche cachée</strong> (en orange) pour zoomer et voir ses connexions en détail.
+    </div>
+
+    <!-- Zone de zoom -->
+    <div class="zoom-panel" id="zoomPanel">
+      <h3>🔍 Zoom — Neurone caché <span id="zoomNeuronId">N1</span></h3>
+      <p style="font-size:14px;color:var(--muted);margin-bottom:16px">Ce neurone reçoit les 100 valeurs de pixels en entrée. Voici un extrait de ses connexions (5 pixels représentatifs) :</p>
+      <div class="zoom-grid" id="zoomGrid"></div>
+      <div class="zoom-sum-box" id="zoomSum"></div>
+    </div>
+
+    <div class="card card-accent" style="margin-top:20px">
+      <h3>📐 Quelques chiffres</h3>
+      <p>Ce réseau contient&nbsp;:</p>
+      <ul style="padding-left:20px;line-height:2.2;font-family:var(--font-mono);font-size:14px">
+        <li>100 × 16 = <strong>1 600 poids</strong> entre l'entrée et la couche cachée</li>
+        <li>16 × 10 = <strong>160 poids</strong> entre la couche cachée et la sortie</li>
+        <li>Soit <strong>1 760 paramètres</strong> au total — tous appris automatiquement</li>
+      </ul>
+      <p style="margin:0">Comparez avec les <strong>10 millions de modifications manuelles</strong> de l'approche symbolique…</p>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goTo(2)">Un neurone de près →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ÉCRAN 2 — Un neurone de près (curseurs)
+══════════════════════════════════════════════ -->
+<div class="screen" id="s2">
+  <div class="container">
+    <span class="badge badge-phase">Étape 2 · Un neurone de près</span>
+
+    <h2>Comment un neurone calcule sa sortie</h2>
+
+    <p>Prenons un neurone simplifié qui ne reçoit que <strong>5 pixels</strong> en entrée. Chaque pixel a une valeur (0 ou 1) et un poids associé. Le neurone calcule la somme pondérée, puis lui applique une
+      <span class="tooltip-wrap">
+        <span class="tooltip-trigger">fonction d'activation</span>
+        <div class="tooltip-box">
+          <canvas id="sigmoidCanvas" width="220" height="120"></canvas>
+          <p>La sigmoïde $\sigma(x) = \frac{1}{1+e^{-x}}$ écrase toute valeur entre 0 et 1.<br>Elle simule l'activation progressive d'un neurone.</p>
+        </div>
+      </span>
+      pour produire une sortie entre 0 et 1.
+    </p>
+
+    <div class="neuron-demo">
+      <h3>🎛️ Modifiez les poids et observez</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Les pixels sont fixés (valeurs d'un « 3 » extrait). Faites varier les poids avec les curseurs.</p>
+
+      <div id="sliderRows"></div>
+
+      <div class="output-bar-wrap">
+        <div class="output-bar-label">Sortie du neurone $\sigma\!\left(\sum w_i \cdot x_i\right)$</div>
+        <div class="output-bar-track"><div class="output-bar-fill" id="outputBarFill" style="width:50%"></div></div>
+        <div class="output-val" id="outputVal">0.50</div>
+        <div class="output-interp" id="outputInterp">Le neurone est à moitié activé.</div>
+      </div>
+    </div>
+
+    <div class="card card-accent">
+      <h3>💡 Ce que cela signifie</h3>
+      <p>Un poids <strong>positif élevé</strong> sur un pixel signifie que ce pixel, lorsqu'il est noir, contribue fortement à activer ce neurone. Un poids <strong>négatif</strong> signifie l'inverse&nbsp;: ce pixel inhibe le neurone.</p>
+      <p style="margin:0">C'est exactement ce que l'apprentissage va optimiser&nbsp;: trouver, pour chaque neurone, les poids qui lui permettent de détecter un motif utile dans l'image.</p>
+    </div>
+
+    <div class="mcq" id="mcq2">
+      <div class="mcq-prompt">Si un pixel vaut 0 (blanc), quel est l'effet de son poids sur la somme pondérée ?</div>
+      <div class="mcq-opts">
+        <div class="mcq-opt" onclick="answer(this,'mcq2','A')"><span class="mcq-letter">A</span>Il contribue négativement, car le pixel est absent</div>
+        <div class="mcq-opt" onclick="answer(this,'mcq2','B')"><span class="mcq-letter">B</span>Il ne contribue pas du tout — $w_i \times 0 = 0$</div>
+        <div class="mcq-opt" onclick="answer(this,'mcq2','C')"><span class="mcq-letter">C</span>Il contribue positivement, comme un pixel noir</div>
+      </div>
+      <div class="mcq-feedback" id="fb-mcq2"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn2" onclick="goTo(3)" disabled>Ce que les poids représentent →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ÉCRAN 3 — Visualisation des poids
+══════════════════════════════════════════════ -->
+<div class="screen" id="s3">
+  <div class="container">
+    <span class="badge badge-phase">Étape 3 · Ce que les poids représentent</span>
+
+    <h2>Les poids comme une image</h2>
+
+    <p>Chaque neurone de la couche cachée possède <strong>100 poids</strong> — un par pixel d'entrée. On peut visualiser ces 100 poids comme une image 10×10, où la couleur de chaque case indique la valeur du poids correspondant.</p>
+
+    <div class="card" style="text-align:center">
+      <h3>🎨 Légende de la carte de poids</h3>
+      <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;font-size:13px;margin:12px 0 20px">
+        <span><span style="display:inline-block;width:16px;height:16px;background:var(--ok);border-radius:3px;vertical-align:middle;margin-right:5px"></span>Poids positif — pixel activateur</span>
+        <span><span style="display:inline-block;width:16px;height:16px;background:var(--pixel-off);border-radius:3px;vertical-align:middle;margin-right:5px;border:1px solid var(--border)"></span>Poids nul — pixel ignoré</span>
+        <span><span style="display:inline-block;width:16px;height:16px;background:var(--bad);border-radius:3px;vertical-align:middle;margin-right:5px"></span>Poids négatif — pixel inhibiteur</span>
+      </div>
+
+      <p style="font-size:14px;color:var(--muted);margin-bottom:16px">Voici les cartes de poids de 4 neurones cachés, <em>après entraînement</em> sur des chiffres 10×10. Chaque neurone a appris à détecter un motif particulier.</p>
+
+      <div class="weight-map-wrap" id="weightMapWrap"></div>
+    </div>
+
+    <div class="card card-accent">
+      <h3>🔍 Interprétation</h3>
+      <p>Les zones vertes indiquent les pixels que ce neurone "cherche"&nbsp;: s'ils sont noirs, ils l'activent fortement. Les zones rouges indiquent les pixels qui l'inhibent. Les zones sombres sont ignorées.</p>
+      <p style="margin:0">On voit apparaître des <strong>détecteurs de motifs</strong>&nbsp;: l'un réagit aux bords horizontaux, un autre aux courbes, un troisième aux traits verticaux… Ce découpage automatique est ce que le réseau apprend.</p>
+    </div>
+
+    <div class="mcq" id="mcq3">
+      <div class="mcq-prompt">Un neurone caché a un poids très positif sur le pixel (5,5) et très négatif sur le pixel (1,1). Que peut-on en déduire ?</div>
+      <div class="mcq-opts">
+        <div class="mcq-opt" onclick="answer(this,'mcq3','A')"><span class="mcq-letter">A</span>Ce neurone s'active quand le pixel (5,5) est noir et le pixel (1,1) est blanc</div>
+        <div class="mcq-opt" onclick="answer(this,'mcq3','B')"><span class="mcq-letter">B</span>Ce neurone s'active quand les deux pixels sont noirs</div>
+        <div class="mcq-opt" onclick="answer(this,'mcq3','C')"><span class="mcq-letter">C</span>Ce neurone ignore ces deux pixels car leurs poids s'annulent</div>
+      </div>
+      <div class="mcq-feedback" id="fb-mcq3"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn3" onclick="goTo(4)" disabled>Conclusion →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ÉCRAN 4 — Transition vers Phase 3
+══════════════════════════════════════════════ -->
+<div class="screen" id="s4">
+  <div class="container">
+    <div class="transition-hero">
+      <span class="transition-icon">⚡</span>
+      <h1>Il reste une question&nbsp;: comment le réseau trouve-t-il les bons poids&nbsp;?</h1>
+    </div>
+
+    <p>Vous venez de comprendre comment un réseau de neurones est structuré, et ce que signifient les poids. Mais on a supposé jusqu'ici que ces poids étaient déjà "bons".</p>
+
+    <p>En réalité, le réseau commence avec des poids <strong>aléatoires</strong> — il ne reconnaît rien du tout. C'est l'<em>entraînement</em> qui va progressivement ajuster ces 1 760 paramètres pour que le réseau se trompe de moins en moins.</p>
+
+    <div class="card card-accent">
+      <h3>🔑 Ce que vous avez découvert</h3>
+      <ul style="padding-left:20px;line-height:2">
+        <li>Un réseau de neurones est organisé en <strong>couches</strong>&nbsp;: entrée → couche cachée → sortie</li>
+        <li>Chaque neurone calcule une <strong>somme pondérée</strong> de ses entrées, puis applique une fonction d'activation</li>
+        <li>Les <strong>poids</strong> encodent ce que chaque neurone a appris à détecter</li>
+        <li>Le réseau entier contient <strong>1 760 paramètres</strong>, tous déterminés automatiquement</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>🔜 Phase 3 — L'entraînement</h3>
+      <p style="margin:0">Dans la prochaine activité, vous observerez en temps réel comment le réseau apprend&nbsp;: vous verrez la courbe d'erreur descendre, les poids évoluer, et le réseau progressivement capable de reconnaître les chiffres.</p>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goTo(0)">← Revoir depuis le début</button>
+      <button class="btn btn-primary" onclick="window.close()">Quitter l'activité ✕</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Navigation ──
+const TOTAL = 5;
+let current = 0;
+function goTo(n) {
+  document.getElementById('s'+current).classList.remove('active');
+  current = n;
+  document.getElementById('s'+n).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('progressFill').style.width = Math.round(n/(TOTAL-1)*100)+'%';
+  document.getElementById('progressLabel').textContent = 'Écran '+(n+1)+' / '+TOTAL;
+  if (n===1) initNetwork();
+  if (n===2) initSliders();
+  if (n===3) initWeightMaps();
+}
+
+// ── MCQ ──
+const MCQ = {
+  mcq0: { correct:'B', ok:'✓ Exactement. Le programmeur ne code plus aucune règle sur les pixels. C\'est le réseau qui, en voyant des milliers d\'exemples étiquetés, ajuste ses poids pour minimiser ses erreurs. Les "règles" émergent automatiquement des données.', bad:'✗ Dans l\'approche connexionniste, le programmeur définit l\'architecture du réseau (nombre de couches, de neurones), mais pas les règles elles-mêmes. Ce sont les poids — ajustés automatiquement — qui encodent la connaissance.', nextBtn:'btn0' },
+  mcq2: { correct:'B', ok:'✓ Correct. $w_i \\times 0 = 0$, quelle que soit la valeur de $w_i$. Un pixel blanc n\'a aucune influence sur la somme pondérée — seuls les pixels noirs (valeur 1) transmettent un signal.', bad:'✗ Rappelons que la contribution d\'une entrée est $w_i \\times x_i$. Si $x_i = 0$ (pixel blanc), ce produit vaut toujours 0, quel que soit le poids. Le pixel blanc est silencieux.', nextBtn:'btn2' },
+  mcq3: { correct:'A', ok:'✓ Bien vu. Un poids positif sur (5,5) signifie que ce pixel noir contribue positivement à l\'activation. Un poids négatif sur (1,1) signifie que si ce pixel est noir (valeur 1), il contribue négativement (inhibe le neurone). Si (1,1) est blanc (valeur 0), son influence est nulle.', bad:'✗ Attention : un poids négatif sur un pixel n\'a d\'effet que si ce pixel est noir (valeur 1). Si le pixel est blanc (0), la contribution est $-w \\times 0 = 0$. Donc le neurone cherche bien (5,5) noir ET (1,1) blanc.', nextBtn:'btn3' },
+};
+
+function answer(el, id, choice) {
+  const {correct, ok, bad, nextBtn} = MCQ[id];
+  el.closest('.mcq-opts').querySelectorAll('.mcq-opt').forEach(o => o.classList.add('disabled'));
+  const fb = document.getElementById('fb-'+id);
+  if (choice === correct) {
+    el.classList.add('correct');
+    fb.className = 'mcq-feedback show ok'; fb.innerHTML = ok;
+  } else {
+    el.classList.add('wrong');
+    fb.className = 'mcq-feedback show bad'; fb.innerHTML = bad;
+    const letters = ['A','B','C'];
+    el.closest('.mcq-opts').querySelectorAll('.mcq-opt')[letters.indexOf(correct)].classList.add('correct');
+  }
+  if (nextBtn) document.getElementById(nextBtn).disabled = false;
+  // re-render KaTeX in feedback
+  if (window.renderMathInElement) renderMathInElement(fb);
+}
+
+// ── ÉCRAN 1 : Dessin du réseau SVG ──
+function initNetwork() {
+  const svg = document.getElementById('networkCanvas');
+  svg.innerHTML = '';
+
+  const W = 700, H = 320;
+  const cols = [
+    { x: 80,  n: 8,  color: '#4f8ef7', label: '100 entrées\n(pixels)', dots: true },
+    { x: 350, n: 6,  color: '#f7794f', label: '16 neurones\ncachés', clickable: true },
+    { x: 620, n: 5,  color: '#3ecf7a', label: '10 sorties\n(chiffres 0–9)', dots: true },
+  ];
+
+  const ns = {}; // neuron positions
+  cols.forEach((col, ci) => {
+    ns[ci] = [];
+    const spacing = H / (col.n + 1);
+    for (let i = 0; i < col.n; i++) {
+      const y = spacing * (i + 1);
+      ns[ci].push({x: col.x, y});
+    }
+  });
+
+  // Connections (subset for clarity)
+  const connGroup = document.createElementNS('http://www.w3.org/2000/svg','g');
+  connGroup.setAttribute('opacity','0.18');
+  // input → hidden
+  for (let h = 0; h < ns[1].length; h++) {
+    for (let i = 0; i < ns[0].length; i++) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1', ns[0][i].x); line.setAttribute('y1', ns[0][i].y);
+      line.setAttribute('x2', ns[1][h].x); line.setAttribute('y2', ns[1][h].y);
+      line.setAttribute('stroke','#4f8ef7'); line.setAttribute('stroke-width','0.8');
+      connGroup.appendChild(line);
+    }
+  }
+  // hidden → output
+  for (let o = 0; o < ns[2].length; o++) {
+    for (let h = 0; h < ns[1].length; h++) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1', ns[1][h].x); line.setAttribute('y1', ns[1][h].y);
+      line.setAttribute('x2', ns[2][o].x); line.setAttribute('y2', ns[2][o].y);
+      line.setAttribute('stroke','#f7794f'); line.setAttribute('stroke-width','0.8');
+      connGroup.appendChild(line);
+    }
+  }
+  svg.appendChild(connGroup);
+
+  // Dots indicators
+  ['…','…'].forEach((_, idx) => {
+    const col = idx === 0 ? cols[0] : cols[2];
+    const dotY = H - 28;
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', col.x); t.setAttribute('y', dotY);
+    t.setAttribute('text-anchor','middle'); t.setAttribute('fill','#7a85a3');
+    t.setAttribute('font-size','18'); t.textContent = '⋮';
+    svg.appendChild(t);
+  });
+
+  // Neurons
+  cols.forEach((col, ci) => {
+    ns[ci].forEach((pos, i) => {
+      const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      circle.setAttribute('cx', pos.x); circle.setAttribute('cy', pos.y);
+      circle.setAttribute('r', ci === 1 ? 14 : 10);
+      circle.setAttribute('fill', col.color);
+      circle.setAttribute('stroke', '#0f1117'); circle.setAttribute('stroke-width','2');
+      if (col.clickable) {
+        circle.style.cursor = 'pointer';
+        circle.addEventListener('click', () => showZoom(i+1));
+        // hover
+        circle.addEventListener('mouseenter', () => circle.setAttribute('r','17'));
+        circle.addEventListener('mouseleave', () => circle.setAttribute('r','14'));
+      }
+      svg.appendChild(circle);
+    });
+
+    // Layer label
+    const lx = col.x;
+    const lines = col.label.split('\n');
+    lines.forEach((line, li) => {
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x', lx); t.setAttribute('y', 14 + li * 15);
+      t.setAttribute('text-anchor','middle'); t.setAttribute('fill','#7a85a3');
+      t.setAttribute('font-size','11'); t.setAttribute('font-family','monospace');
+      t.textContent = line;
+      svg.appendChild(t);
+    });
+  });
+}
+
+// ── Zoom sur un neurone caché ──
+const SAMPLE_PIXELS = [
+  {r:1,c:3,val:1},{r:3,c:5,val:1},{r:5,c:7,val:0},{r:7,c:2,val:1},{r:9,c:8,val:0}
+];
+const SAMPLE_WEIGHTS_BASE = [0.8, 0.6, -0.4, 0.9, -0.2];
+
+function showZoom(neuronId) {
+  document.getElementById('zoomNeuronId').textContent = 'N'+neuronId;
+  const offset = (neuronId - 1) * 0.1;
+  const weights = SAMPLE_WEIGHTS_BASE.map(w => +(w + offset * (Math.random()-0.5)).toFixed(2));
+
+  const grid = document.getElementById('zoomGrid');
+  grid.innerHTML = '';
+
+  // Pixel column
+  const col = document.createElement('div');
+  col.className = 'zoom-inputs';
+  col.innerHTML = '<div style="font-size:12px;color:var(--muted);font-family:var(--font-mono);margin-bottom:6px">Entrées (pixels)</div>';
+  SAMPLE_PIXELS.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'zoom-input-row';
+    row.innerHTML = `
+      <div class="zoom-pixel ${p.val?'on':''}"></div>
+      <span style="color:var(--muted)">x<sub>${i+1}</sub> = ${p.val}</span>
+      <span class="zoom-arrow">×</span>
+      <span class="zoom-w">w<sub>${i+1}</sub> = ${weights[i] > 0 ? '+' : ''}${weights[i]}</span>
+      <span class="zoom-arrow">=</span>
+      <span style="color:${weights[i]*p.val >= 0 ? 'var(--ok)' : 'var(--bad)'}">${(weights[i]*p.val).toFixed(2)}</span>
+    `;
+    col.appendChild(row);
+  });
+  grid.appendChild(col);
+
+  // Sum
+  const sum = SAMPLE_PIXELS.reduce((acc,p,i) => acc + p.val*weights[i], 0);
+  const sigma = 1/(1+Math.exp(-sum));
+  document.getElementById('zoomSum').innerHTML = `
+    <div style="color:var(--muted);font-size:12px;margin-bottom:6px">Somme pondérée (5 entrées sur 100 montrées) :</div>
+    <div style="color:var(--text)">z ≈ ${sum.toFixed(2)}</div>
+    <div style="margin-top:8px;color:var(--muted);font-size:12px">Après fonction d'activation :</div>
+    <div style="color:var(--accent);font-size:1.1em;font-weight:700">σ(z) = ${sigma.toFixed(3)}</div>
+  `;
+
+  document.getElementById('zoomPanel').classList.add('show');
+  document.getElementById('zoomPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ── ÉCRAN 2 : Curseurs ──
+const DEMO_PIXELS = [
+  {label:'pixel (2,4)', val:1},
+  {label:'pixel (4,7)', val:1},
+  {label:'pixel (5,2)', val:0},
+  {label:'pixel (7,8)', val:1},
+  {label:'pixel (9,3)', val:0},
+];
+let demoWeights = [0.5, 0.3, -0.2, 0.7, -0.5];
+
+function sigmoid(x) { return 1/(1+Math.exp(-x)); }
+
+function initSliders() {
+  const container = document.getElementById('sliderRows');
+  container.innerHTML = '';
+  DEMO_PIXELS.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'slider-row';
+    row.innerHTML = `
+      <div class="pixel-demo ${p.val?'on':''}"></div>
+      <label>${p.label} (x=${p.val})</label>
+      <input type="range" min="-2" max="2" step="0.1" value="${demoWeights[i]}"
+        oninput="demoWeights[${i}]=parseFloat(this.value);updateSliderVal(this,${i});updateOutput()">
+      <span class="slider-val" id="sv${i}">${demoWeights[i].toFixed(1)}</span>
+    `;
+    container.appendChild(row);
+  });
+  updateOutput();
+  drawSigmoid();
+}
+
+function updateSliderVal(input, i) {
+  document.getElementById('sv'+i).textContent = parseFloat(input.value).toFixed(1);
+}
+
+function updateOutput() {
+  const z = DEMO_PIXELS.reduce((acc,p,i) => acc + p.val*demoWeights[i], 0);
+  const out = sigmoid(z);
+  const pct = Math.round(out*100);
+  document.getElementById('outputBarFill').style.width = pct+'%';
+  document.getElementById('outputVal').textContent = out.toFixed(3);
+  let interp = '';
+  if (out < 0.2)      interp = 'Le neurone est très peu activé — ce motif ne lui correspond pas.';
+  else if (out < 0.4) interp = 'Le neurone est faiblement activé.';
+  else if (out < 0.6) interp = 'Le neurone est modérément activé.';
+  else if (out < 0.8) interp = 'Le neurone est fortement activé — ce motif lui correspond bien.';
+  else                interp = 'Le neurone est très fortement activé !';
+  document.getElementById('outputInterp').textContent = interp;
+}
+
+function drawSigmoid() {
+  const canvas = document.getElementById('sigmoidCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Axes
+  ctx.strokeStyle = '#2a3050'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0,H/2); ctx.lineTo(W,H/2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
+
+  // Curve
+  ctx.strokeStyle = '#4f8ef7'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let px = 0; px < W; px++) {
+    const x = (px/W - 0.5)*12;
+    const y = H - sigmoid(x)*H;
+    px === 0 ? ctx.moveTo(px,y) : ctx.lineTo(px,y);
+  }
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#7a85a3'; ctx.font = '10px monospace';
+  ctx.fillText('0', W/2-12, H-3);
+  ctx.fillText('1', W-20, H/2-4);
+  ctx.fillText('0', 4, H-3);
+}
+
+// ── ÉCRAN 3 : Cartes de poids ──
+const WEIGHT_PATTERNS = [
+  { label:'Neurone 1\n(bord droit)', gen:(r,c) => c > 6 ? 0.8 : c > 4 ? 0.2 : -0.3 },
+  { label:'Neurone 5\n(arc supérieur)', gen:(r,c) => r < 3 && c > 2 && c < 8 ? 0.9 : r < 5 && (c===2||c===8) ? 0.5 : -0.2 },
+  { label:'Neurone 9\n(jonction centrale)', gen:(r,c) => r > 3 && r < 6 && c > 3 && c < 8 ? 0.85 : -0.15 },
+  { label:'Neurone 14\n(bord gauche)', gen:(r,c) => c < 3 ? 0.7 : c < 5 ? 0.1 : -0.4 },
+];
+
+function initWeightMaps() {
+  const wrap = document.getElementById('weightMapWrap');
+  wrap.innerHTML = '';
+  WEIGHT_PATTERNS.forEach(pat => {
+    const item = document.createElement('div');
+    item.className = 'weight-map-item';
+    const labelLines = pat.label.split('\n');
+    item.innerHTML = `<div class="weight-map-label">${labelLines.join('<br>')}</div>`;
+    const grid = document.createElement('div');
+    grid.className = 'weight-grid';
+    for (let r=0;r<10;r++) for (let c=0;c<10;c++) {
+      const w = pat.gen(r,c) + (Math.random()-0.5)*0.25;
+      const div = document.createElement('div');
+      div.className = 'weight-pixel';
+      div.style.background = weightColor(w);
+      grid.appendChild(div);
+    }
+    item.appendChild(grid);
+    wrap.appendChild(item);
+  });
+}
+
+function weightColor(w) {
+  if (w > 0.15)  return `rgba(62,207,122,${Math.min(w,1)})`;
+  if (w < -0.15) return `rgba(247,90,90,${Math.min(-w,1)})`;
+  return '#1e2438';
+}
+</script>
+</body>
+</html>
