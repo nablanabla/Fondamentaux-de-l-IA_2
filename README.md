@@ -39,6 +39,12 @@ La reconnaissance de l'écriture manuscrite pose un problème d'une toute autre 
 
 ##  Activité 2: L'approche connexioniste, l'exemple du perceptron
 
+
+# 🔗  L'inspiration biologique
+Le cerveau humain contient environ [entre 85 et 86 milliards de neurones](https://institutducerveau.org/fiches-fonctions-cerveau/cerveau). Chaque neurone reçoit des signaux électriques de milliers d'autres neurones, les additionne, et s'active — ou non — selon que cette somme dépasse un certain seuil.
+C'est précisément ce mécanisme que le **neurone artificiel** cherche à reproduire, de façon mathématique et simplifiée.
+    
+
 ---
 
 
