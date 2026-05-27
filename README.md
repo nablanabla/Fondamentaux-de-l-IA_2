@@ -50,13 +50,13 @@ C'est l'idée révolutionnaire de deux mathématiciens Warren McCulloch et Walte
 
 
 <p align="center">
-   <img src="assets/images/A logical Calculus.png" alt="Logical">
+   <img src="assets/images/A logical Calculus.png" alt="Logical" width="75%">
   <br>
   <em>L'article de McCulloch&Pitts (1943) </em>
 </p>
 
 
-[Pour comprendre cette logique révolutionnaire, lancer l'activité 2: Et si on laissait la machine apprendre d'elle-même ?](https://nablanabla.github.io/Fondamentaux-de-l-IA_2/phase2-perceptron/)
+Pour comprendre cette logique révolutionnaire, [lancer l'activité 2: Et si on laissait la machine apprendre d'elle-même ?](https://nablanabla.github.io/Fondamentaux-de-l-IA_2/phase2-perceptron/)
 
 **Durée estimée :** 20 minutes
 
