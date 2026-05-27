@@ -5,12 +5,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Reconnaissance de chiffres — Phase 2 : Le perceptron multicouche</title>
-
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" />
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
     onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
-
   <style>
     :root {
       --bg: #0f1117;
@@ -630,7 +628,6 @@
       border-radius: 3px;
     }
 
-    /* ── Vecteur colonne avec groupes de 10 ── */
     .vector-col-wrap {
       display: inline-flex;
       flex-direction: column;
@@ -685,7 +682,7 @@
       <p>L'idée fondamentale de l'approche connexionniste est radicalement différente&nbsp;: <em>au lieu d'écrire les
           règles, on montre des exemples au programme, et on le laisse trouver lui-même les régularités.</em></p>
       <div class="card">
-        <h3>⚙️ Le neurone artificiel — intuition</h3>
+        <h3>&#9881;&#65039; Le neurone artificiel — intuition</h3>
         <p>Un neurone artificiel reçoit plusieurs valeurs en entrée (par exemple, les niveaux de gris des pixels d'une
           image). Il <strong>pondère</strong> chaque entrée par un coefficient — le <strong>poids</strong> — puis
           additionne le tout. Si la somme est suffisamment grande, il s'active.</p>
@@ -706,25 +703,22 @@
         <div class="mcq-feedback" id="fb-mcq0"></div>
       </div>
       <div class="btn-row">
-        <button class="btn btn-primary" id="btn0" onclick="goTo(1)" disabled>Les entrées du réseau →</button>
+        <button class="btn btn-primary" id="btn0" onclick="goTo(1)" disabled>Les entrées du réseau &#8594;</button>
       </div>
     </div>
   </div>
 
-  <!-- ÉCRAN 1 — Pixels → vecteur -->
+  <!-- ÉCRAN 1 -->
   <div class="screen" id="s1">
     <div class="container">
       <span class="badge badge-phase">Étape 1 · Les entrées du réseau</span>
       <h2>De l'image aux nombres</h2>
       <p>Avant d'entrer dans le réseau, une image 10×10 doit être convertie en une liste de nombres. C'est la première
         étape&nbsp;: transformer quelque chose de visuel en quelque chose de calculable.</p>
-
       <div class="card" style="padding:20px">
-        <h3>🔢 Du pixel à la valeur numérique</h3>
+        <h3>&#55356;&#56354; Du pixel à la valeur numérique</h3>
         <p style="font-size:14px;color:var(--muted);margin-bottom:16px">Le chiffre « 3 » de la Phase 1. <strong
             style="color:var(--accent)">Cliquez sur l'image</strong> pour voir ce que va « lire » le réseau.</p>
-
-        <!-- Phase A : lecture ligne par ligne -->
         <div id="phaseA" style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap">
           <div>
             <div
@@ -733,55 +727,40 @@
             <div id="pixelInputGrid"
               style="display:grid;grid-template-columns:repeat(10,1fr);gap:3px;width:min(200px,55vw);cursor:pointer">
             </div>
-            <div style="text-align:center;margin-top:10px;font-size:12px;color:var(--muted)" id="readPrompt">👆 Cliquez
-              pour lancer la lecture</div>
+            <div style="text-align:center;margin-top:10px;font-size:12px;color:var(--muted)" id="readPrompt">&#128070;
+              Cliquez pour lancer la lecture</div>
           </div>
-          <div style="display:flex;align-items:center;font-size:2rem;color:var(--muted);padding-top:40px">→</div>
+          <div style="display:flex;align-items:center;font-size:2rem;color:var(--muted);padding-top:40px">&#8594;</div>
           <div style="flex:1;min-width:160px">
             <div
               style="font-size:12px;color:var(--muted);font-family:var(--font-mono);margin-bottom:8px;text-align:center">
               Lecture ligne par ligne</div>
             <div id="vectorDisplay"
               style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:var(--font-mono);font-size:13px;line-height:2;min-height:60px;">
-              <span style="color:var(--muted);font-style:italic;font-size:13px">En attente…</span>
+              <span style="color:var(--muted);font-style:italic;font-size:13px">En attente&#8230;</span>
             </div>
           </div>
         </div>
-
-        <!-- Phase B : vecteur colonne final -->
         <div id="phaseB" style="display:none;margin-top:28px;animation:fadeIn .5s ease">
           <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
-
-            <!-- Zone de transition : lignes oranges → flèches → vecteur colonne -->
             <div style="flex:1;min-width:220px">
               <div
                 style="font-size:12px;color:var(--muted);font-family:var(--font-mono);margin-bottom:10px;text-align:center">
                 Les lignes se mettent bout à bout pour former un <strong style="color:var(--text)">vecteur
                   colonne</strong>
               </div>
-
               <div style="display:flex;gap:12px;align-items:flex-start;justify-content:center">
-
-                <!-- Mini-lignes oranges (rappel) -->
                 <div id="miniRows" style="display:flex;flex-direction:column;gap:3px;padding-top:2px"></div>
-
-                <!-- Flèches -->
                 <div id="arrowCol" style="display:flex;flex-direction:column;gap:3px;padding-top:2px"></div>
-
-                <!-- Vecteur colonne groupé -->
                 <div style="display:flex;justify-content:center">
                   <div class="vector-col-wrap" id="vectorColumn"></div>
                 </div>
-
               </div>
               <div
                 style="text-align:center;font-size:11px;color:var(--muted);margin-top:8px;font-family:var(--font-mono)">
-                Vecteur de 100 valeurs — séparateurs tous les 10
-              </div>
+                Vecteur de 100 valeurs — séparateurs tous les 10</div>
             </div>
-
-            <div style="display:flex;align-items:center;font-size:2rem;color:var(--muted)">→</div>
-
+            <div style="display:flex;align-items:center;font-size:2rem;color:var(--muted)">&#8594;</div>
             <div style="flex:1;min-width:160px;padding-top:8px">
               <div style="font-size:13px;color:var(--muted);line-height:1.7">
                 Ce vecteur est la <strong style="color:var(--text)">couche d'entrée</strong> du réseau.<br><br>
@@ -792,9 +771,8 @@
           </div>
         </div>
       </div>
-
       <div class="card card-accent" id="vectorConclusionCard" style="display:none">
-        <h3>📌 Ce que le réseau reçoit vraiment</h3>
+        <h3>&#128204; Ce que le réseau reçoit vraiment</h3>
         <p>Le réseau ne « voit » jamais une image. Il reçoit uniquement cette liste de <strong>100 nombres</strong> —
           tous des 0 ou des 1. C'est à partir de ces seules valeurs numériques qu'il doit apprendre à reconnaître le
           chiffre.</p>
@@ -803,17 +781,18 @@
         <p style="margin:0">Mais cette taille atteint <em>des millions de valeurs</em> pour les images couramment
           utilisées.</p>
       </div>
-
       <div class="btn-row">
-        <button class="btn btn-primary" onclick="goTo(2)">Voir l'architecture du réseau →</button>
+        <button class="btn btn-primary" onclick="goTo(2)">Voir l'architecture du réseau &#8594;</button>
       </div>
     </div>
   </div>
 
-  <!-- ÉCRAN 2 — Architecture -->
+  <!-- ÉCRAN 2 -->
   <div class="screen" id="s2">
     <div class="container">
       <span class="badge badge-phase">Étape 2 · Architecture du réseau</span>
+      <p>L'idée (géniale) du connexionnisme est de faire « dialoguer » ces pixels entre eux pour que le système
+        reconnaisse un 3.</p>
       <h2>Un réseau de neurones en trois couches</h2>
       <p>Notre réseau est organisé en <strong>trois couches</strong> successives. L'information circule toujours de
         gauche à droite — des pixels bruts jusqu'à la décision finale.</p>
@@ -837,14 +816,14 @@
       <div class="info-box"><strong>Cliquez sur un neurone de la couche cachée</strong> (en orange) pour zoomer et voir
         ses connexions en détail.</div>
       <div class="zoom-panel" id="zoomPanel">
-        <h3>🔍 Zoom — Neurone caché <span id="zoomNeuronId">N1</span></h3>
+        <h3>&#128269; Zoom — Neurone caché <span id="zoomNeuronId">N1</span></h3>
         <p style="font-size:14px;color:var(--muted);margin-bottom:16px">Ce neurone reçoit les 100 valeurs de pixels en
           entrée. Voici un extrait de ses connexions (5 pixels représentatifs) :</p>
         <div class="zoom-grid" id="zoomGrid"></div>
         <div class="zoom-sum-box" id="zoomSum"></div>
       </div>
       <div class="card card-accent" style="margin-top:20px">
-        <h3>📐 Quelques chiffres</h3>
+        <h3>&#128208; Quelques chiffres</h3>
         <p>Ce réseau contient&nbsp;:</p>
         <ul style="padding-left:20px;line-height:2.2;font-family:var(--font-mono);font-size:14px">
           <li>100 × 16 = <strong>1 600 poids</strong> entre l'entrée et la couche cachée</li>
@@ -852,21 +831,21 @@
           <li>Soit <strong>1 760 paramètres</strong> au total — tous appris automatiquement</li>
         </ul>
         <p style="margin:0">Comparez avec les <strong>10 millions de modifications manuelles</strong> de l'approche
-          symbolique…</p>
+          symbolique&#8230;</p>
       </div>
       <div class="btn-row">
-        <button class="btn btn-primary" onclick="goTo(3)">Un neurone de près →</button>
+        <button class="btn btn-primary" onclick="goTo(3)">Un neurone de près &#8594;</button>
       </div>
     </div>
   </div>
 
-  <!-- ÉCRAN 3 — Neurone de près -->
+  <!-- ÉCRAN 3 -->
   <div class="screen" id="s3">
     <div class="container">
       <span class="badge badge-phase">Étape 3 · Un neurone de près</span>
       <h2>Comment un neurone calcule sa sortie</h2>
-      <p>Prenons un neurone simplifié qui ne reçoit que <strong>5 pixels</strong> en entrée. Chaque pixel a une valeur
-        (0 ou 1) et un poids associé. Le neurone calcule la somme pondérée, puis lui applique une
+      <p>Prenons un neurone simplifié qui ne reçoit que <strong>5 pixels</strong> en entrée. Chaque pixel transmet un
+        signal (0 ou 1), multiplié par un poids avant d'être additionné. Le neurone applique ensuite une
         <span class="tooltip-wrap">
           <span class="tooltip-trigger">fonction d'activation</span>
           <div class="tooltip-box">
@@ -877,8 +856,93 @@
         </span>
         pour produire une sortie entre 0 et 1.
       </p>
+
+      <!-- Schéma SVG du neurone — dynamique, synchronisé aux curseurs -->
+      <div
+        style="margin:20px 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+        <svg id="neuronSVG" viewBox="0 0 580 260" xmlns="http://www.w3.org/2000/svg"
+          style="width:100%;max-width:580px;display:block;margin:0 auto">
+
+          <!-- Fils de connexion -->
+          <line x1="90" y1="30" x2="270" y2="130" stroke="#4f8ef7" stroke-width="1.5" opacity="0.5" />
+          <line x1="90" y1="75" x2="270" y2="130" stroke="#4f8ef7" stroke-width="1.5" opacity="0.5" />
+          <line x1="90" y1="130" x2="270" y2="130" stroke="#4f8ef7" stroke-width="1.5" opacity="0.5" />
+          <line x1="90" y1="185" x2="270" y2="130" stroke="#4f8ef7" stroke-width="1.5" opacity="0.5" />
+          <line x1="90" y1="230" x2="270" y2="130" stroke="#4f8ef7" stroke-width="1.5" opacity="0.5" />
+
+          <!-- Fil sortie + flèche -->
+          <line x1="312" y1="130" x2="460" y2="130" stroke="#3ecf7a" stroke-width="2" opacity="0.8" />
+          <polygon points="460,124 474,130 460,136" fill="#3ecf7a" opacity="0.8" />
+
+          <!-- Cercles pixels entrée -->
+          <circle cx="65" cy="30" r="22" fill="#1e2438" stroke="#4f8ef7" stroke-width="2" />
+          <circle cx="65" cy="75" r="22" fill="#1e2438" stroke="#4f8ef7" stroke-width="2" />
+          <circle cx="65" cy="130" r="22" fill="#1e2438" stroke="#4f8ef7" stroke-width="2" />
+          <circle cx="65" cy="185" r="22" fill="#1e2438" stroke="#4f8ef7" stroke-width="2" />
+          <circle cx="65" cy="230" r="22" fill="#1e2438" stroke="#4f8ef7" stroke-width="2" />
+
+          <!-- Valeurs dans les cercles entrée -->
+          <text id="sv_in0" x="65" y="35" text-anchor="middle" font-size="13" font-family="monospace" font-weight="700"
+            fill="#4f8ef7">1</text>
+          <text id="sv_in1" x="65" y="80" text-anchor="middle" font-size="13" font-family="monospace"
+            fill="#e8ecf5">0</text>
+          <text id="sv_in2" x="65" y="135" text-anchor="middle" font-size="13" font-family="monospace" font-weight="700"
+            fill="#4f8ef7">1</text>
+          <text id="sv_in3" x="65" y="190" text-anchor="middle" font-size="13" font-family="monospace"
+            fill="#e8ecf5">0</text>
+          <text id="sv_in4" x="65" y="235" text-anchor="middle" font-size="13" font-family="monospace" font-weight="700"
+            fill="#4f8ef7">1</text>
+
+          <!-- Labels entrées (décalés à gauche, hors cercle) -->
+          <text x="2" y="20" fill="#7a85a3" font-size="9" font-family="monospace">pixel 1</text>
+          <text x="2" y="65" fill="#7a85a3" font-size="9" font-family="monospace">pixel 2</text>
+          <text x="2" y="120" fill="#7a85a3" font-size="9" font-family="monospace">pixel 3</text>
+          <text x="2" y="175" fill="#7a85a3" font-size="9" font-family="monospace">pixel 4</text>
+          <text x="2" y="220" fill="#7a85a3" font-size="9" font-family="monospace">pixel 5</text>
+
+          <!-- Étiquettes poids sur les fils -->
+          <rect id="wb0" x="130" y="44" width="52" height="16" rx="4" fill="#181c27" stroke="#2a3050" />
+          <text id="wt0" x="156" y="56" text-anchor="middle" fill="#f7794f" font-size="10"
+            font-family="monospace">w=0.5</text>
+
+          <rect id="wb1" x="130" y="82" width="52" height="16" rx="4" fill="#181c27" stroke="#2a3050" />
+          <text id="wt1" x="156" y="94" text-anchor="middle" fill="#f7794f" font-size="10"
+            font-family="monospace">w=0.3</text>
+
+          <rect id="wb2" x="108" y="118" width="52" height="16" rx="4" fill="#181c27" stroke="#2a3050" />
+          <text id="wt2" x="134" y="130" text-anchor="middle" fill="#f7794f" font-size="10"
+            font-family="monospace">w=-0.2</text>
+
+          <rect id="wb3" x="130" y="152" width="52" height="16" rx="4" fill="#181c27" stroke="#2a3050" />
+          <text id="wt3" x="156" y="164" text-anchor="middle" fill="#f7794f" font-size="10"
+            font-family="monospace">w=0.7</text>
+
+          <rect id="wb4" x="130" y="185" width="52" height="16" rx="4" fill="#181c27" stroke="#2a3050" />
+          <text id="wt4" x="156" y="197" text-anchor="middle" fill="#f7794f" font-size="10"
+            font-family="monospace">w=-0.5</text>
+
+          <!-- Neurone central -->
+          <circle cx="290" cy="130" r="40" fill="#181c27" stroke="#f7794f" stroke-width="2.5" />
+          <text x="290" y="124" text-anchor="middle" fill="#e8ecf5" font-size="10" font-family="monospace">somme</text>
+          <text x="290" y="137" text-anchor="middle" fill="#e8ecf5" font-size="10"
+            font-family="monospace">ponderee</text>
+          <text x="290" y="150" text-anchor="middle" fill="#f7794f" font-size="9" font-family="monospace">+
+            activation</text>
+          <text x="290" y="182" text-anchor="middle" fill="#7a85a3" font-size="10"
+            font-family="monospace">&#963;(z)</text>
+
+          <!-- Sortie -->
+          <circle cx="492" cy="130" r="28" fill="#181c27" stroke="#3ecf7a" stroke-width="2" />
+          <text id="svg_out" x="492" y="126" text-anchor="middle" fill="#3ecf7a" font-size="13" font-family="monospace"
+            font-weight="700">0.50</text>
+          <text x="492" y="142" text-anchor="middle" fill="#7a85a3" font-size="9" font-family="monospace">sortie</text>
+
+        </svg>
+        <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:8px;font-family:var(--font-mono)">Les
+          poids (en orange) et la sortie (en vert) se mettent à jour en temps réel avec les curseurs</p>
+      </div>
       <div class="neuron-demo">
-        <h3>🎛️ Modifiez les poids et observez</h3>
+        <h3>&#127899;&#65039; Modifiez les poids et observez</h3>
         <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Les pixels sont fixés (valeurs d'un « 3 »
           extrait). Faites varier les poids avec les curseurs.</p>
         <div id="sliderRows"></div>
@@ -892,7 +956,7 @@
         </div>
       </div>
       <div class="card card-accent">
-        <h3>💡 Ce que cela signifie</h3>
+        <h3>&#128161; Ce que cela signifie</h3>
         <p>Un poids <strong>positif élevé</strong> sur un pixel signifie que ce pixel, lorsqu'il est noir, contribue
           fortement à activer ce neurone. Un poids <strong>négatif</strong> signifie l'inverse&nbsp;: ce pixel inhibe le
           neurone.</p>
@@ -912,21 +976,22 @@
         <div class="mcq-feedback" id="fb-mcq2"></div>
       </div>
       <div class="btn-row">
-        <button class="btn btn-primary" id="btn2" onclick="goTo(4)" disabled>Ce que les poids représentent →</button>
+        <button class="btn btn-primary" id="btn2" onclick="goTo(4)" disabled>Ce que les poids représentent
+          &#8594;</button>
       </div>
     </div>
   </div>
 
-  <!-- ÉCRAN 4 — Poids -->
+  <!-- ÉCRAN 4 -->
   <div class="screen" id="s4">
     <div class="container">
       <span class="badge badge-phase">Étape 4 · Ce que les poids représentent</span>
       <h2>Les poids comme une image</h2>
-      <p>Chaque neurone de la couche cachée possède <strong>100 poids</strong> — un par pixel d'entrée. On peut
-        visualiser ces 100 poids comme une image 10×10, où la couleur de chaque case indique la valeur du poids
-        correspondant.</p>
+      <p>Chaque neurone de la couche cachée reçoit <strong>100 signaux en entrée</strong> — un par pixel — et chacun de
+        ces signaux est multiplié par un poids avant d'être additionné. On peut visualiser ces 100 poids comme une image
+        10×10, où la couleur de chaque case indique la valeur du poids associé à ce pixel.</p>
       <div class="card" style="text-align:center">
-        <h3>🎨 Légende de la carte de poids</h3>
+        <h3>&#127912; Légende de la carte de poids</h3>
         <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;font-size:13px;margin:12px 0 20px">
           <span><span
               style="display:inline-block;width:16px;height:16px;background:var(--ok);border-radius:3px;vertical-align:middle;margin-right:5px"></span>Poids
@@ -944,12 +1009,12 @@
         <div class="weight-map-wrap" id="weightMapWrap"></div>
       </div>
       <div class="card card-accent">
-        <h3>🔍 Interprétation</h3>
+        <h3>&#128269; Interprétation</h3>
         <p>Les zones vertes indiquent les pixels que ce neurone "cherche"&nbsp;: s'ils sont noirs, ils l'activent
           fortement. Les zones rouges indiquent les pixels qui l'inhibent. Les zones sombres sont ignorées.</p>
         <p style="margin:0">On voit apparaître des <strong>détecteurs de motifs</strong>&nbsp;: l'un réagit aux bords
-          horizontaux, un autre aux courbes, un troisième aux traits verticaux… Ce découpage automatique est ce que le
-          réseau apprend.</p>
+          horizontaux, un autre aux courbes, un troisième aux traits verticaux&#8230; Ce découpage automatique est ce
+          que le réseau apprend.</p>
       </div>
       <div class="mcq" id="mcq3">
         <div class="mcq-prompt">Un neurone caché a un poids très positif sur le pixel (5,5) et très négatif sur le pixel
@@ -965,16 +1030,16 @@
         <div class="mcq-feedback" id="fb-mcq3"></div>
       </div>
       <div class="btn-row">
-        <button class="btn btn-primary" id="btn3" onclick="goTo(5)" disabled>Conclusion →</button>
+        <button class="btn btn-primary" id="btn3" onclick="goTo(5)" disabled>Conclusion &#8594;</button>
       </div>
     </div>
   </div>
 
-  <!-- ÉCRAN 5 — Conclusion -->
+  <!-- ÉCRAN 5 -->
   <div class="screen" id="s5">
     <div class="container">
       <div class="transition-hero">
-        <span class="transition-icon">⚡</span>
+        <span class="transition-icon">&#9889;</span>
         <h1>Il reste une question&nbsp;: comment le réseau trouve-t-il les bons poids&nbsp;?</h1>
       </div>
       <p>Vous venez de comprendre comment un réseau de neurones est structuré, et ce que signifient les poids. Mais on a
@@ -983,9 +1048,10 @@
         l'<em>entraînement</em> qui va progressivement ajuster ces 1 760 paramètres pour que le réseau se trompe de
         moins en moins.</p>
       <div class="card card-accent">
-        <h3>🔑 Ce que vous avez découvert</h3>
+        <h3>&#128273; Ce que vous avez découvert</h3>
         <ul style="padding-left:20px;line-height:2">
-          <li>Un réseau de neurones est organisé en <strong>couches</strong>&nbsp;: entrée → couche cachée → sortie</li>
+          <li>Un réseau de neurones est organisé en <strong>couches</strong>&nbsp;: entrée &#8594; couche cachée &#8594;
+            sortie</li>
           <li>Chaque neurone calcule une <strong>somme pondérée</strong> de ses entrées, puis applique une fonction
             d'activation</li>
           <li>Les <strong>poids</strong> encodent ce que chaque neurone a appris à détecter</li>
@@ -993,14 +1059,14 @@
         </ul>
       </div>
       <div class="card">
-        <h3>🔜 Phase 3 — L'entraînement</h3>
+        <h3>&#128284; Phase 3 — L'entraînement</h3>
         <p style="margin:0">Dans la prochaine activité, vous observerez en temps réel comment le réseau apprend&nbsp;:
           vous verrez la courbe d'erreur descendre, les poids évoluer, et le réseau progressivement capable de
           reconnaître les chiffres.</p>
       </div>
       <div class="btn-row">
-        <button class="btn btn-secondary" onclick="goTo(0)">← Revoir depuis le début</button>
-        <button class="btn btn-primary" onclick="window.close()">Quitter l'activité ✕</button>
+        <button class="btn btn-secondary" onclick="goTo(0)">&#8592; Revoir depuis le début</button>
+        <button class="btn btn-primary" onclick="window.close()">Quitter l'activité &#10005;</button>
       </div>
     </div>
   </div>
@@ -1014,7 +1080,7 @@
       document.getElementById('s' + n).classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       document.getElementById('progressFill').style.width = Math.round(n / (TOTAL - 1) * 100) + '%';
-      document.getElementById('progressLabel').textContent = 'Écran ' + (n + 1) + ' / ' + TOTAL;
+      document.getElementById('progressLabel').textContent = 'Ecran ' + (n + 1) + ' / ' + TOTAL;
       if (n === 1) initPixelInput();
       if (n === 2) initNetwork();
       if (n === 3) initSliders();
@@ -1022,9 +1088,9 @@
     }
 
     const MCQ = {
-      mcq0: { correct: 'B', ok: '✓ Exactement. Le programmeur ne code plus aucune règle sur les pixels. C\'est le réseau qui, en voyant des milliers d\'exemples étiquetés, ajuste ses poids pour minimiser ses erreurs. Les "règles" émergent automatiquement des données.', bad: '✗ Dans l\'approche connexionniste, le programmeur définit l\'architecture du réseau (nombre de couches, de neurones), mais pas les règles elles-mêmes. Ce sont les poids — ajustés automatiquement — qui encodent la connaissance.', nextBtn: 'btn0' },
-      mcq2: { correct: 'B', ok: '✓ Correct. $w_i \\times 0 = 0$, quelle que soit la valeur de $w_i$. Un pixel blanc n\'a aucune influence sur la somme pondérée — seuls les pixels noirs (valeur 1) transmettent un signal.', bad: '✗ Rappelons que la contribution d\'une entrée est $w_i \\times x_i$. Si $x_i = 0$ (pixel blanc), ce produit vaut toujours 0, quel que soit le poids. Le pixel blanc est silencieux.', nextBtn: 'btn2' },
-      mcq3: { correct: 'A', ok: '✓ Bien vu. Un poids positif sur (5,5) signifie que ce pixel noir contribue positivement à l\'activation. Un poids négatif sur (1,1) signifie que si ce pixel est noir (valeur 1), il contribue négativement (inhibe le neurone). Si (1,1) est blanc (valeur 0), son influence est nulle.', bad: '✗ Attention : un poids négatif sur un pixel n\'a d\'effet que si ce pixel est noir (valeur 1). Si le pixel est blanc (0), la contribution est $-w \\times 0 = 0$. Donc le neurone cherche bien (5,5) noir ET (1,1) blanc.', nextBtn: 'btn3' },
+      mcq0: { correct: 'B', ok: '&#10003; Exactement. Le programmeur ne code plus aucune regle sur les pixels. C\'est le reseau qui, en voyant des milliers d\'exemples etiquetes, ajuste ses poids pour minimiser ses erreurs. Les regles emergent automatiquement des donnees.', bad: '&#10007; Dans l\'approche connexionniste, le programmeur definit l\'architecture du reseau (nombre de couches, de neurones), mais pas les regles elles-memes. Ce sont les poids — ajustes automatiquement — qui encodent la connaissance.', nextBtn: 'btn0' },
+      mcq2: { correct: 'B', ok: '&#10003; Correct. $w_i \\times 0 = 0$, quelle que soit la valeur de $w_i$. Un pixel blanc n\'a aucune influence sur la somme ponderee — seuls les pixels noirs (valeur 1) transmettent un signal.', bad: '&#10007; Rappelons que la contribution d\'une entree est $w_i \\times x_i$. Si $x_i = 0$ (pixel blanc), ce produit vaut toujours 0, quel que soit le poids. Le pixel blanc est silencieux.', nextBtn: 'btn2' },
+      mcq3: { correct: 'A', ok: '&#10003; Bien vu. Un poids positif sur (5,5) signifie que ce pixel noir contribue positivement a l\'activation. Un poids negatif sur (1,1) signifie que si ce pixel est noir (valeur 1), il contribue negativement. Si (1,1) est blanc (valeur 0), son influence est nulle.', bad: '&#10007; Attention : un poids negatif sur un pixel n\'a d\'effet que si ce pixel est noir (valeur 1). Si le pixel est blanc (0), la contribution est nulle. Donc le neurone cherche bien (5,5) noir ET (1,1) blanc.', nextBtn: 'btn3' },
     };
 
     function answer(el, id, choice) {
@@ -1041,7 +1107,7 @@
       if (window.renderMathInElement) renderMathInElement(fb);
     }
 
-    // ── ÉCRAN 1 ──
+    // ECRAN 1
     const POLICE_A = [
       0, 1, 1, 1, 1, 1, 1, 1, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 1, 1, 0,
@@ -1069,8 +1135,8 @@
         div.style.background = val ? '#4f8ef7' : '#1e2438';
         grid.appendChild(div);
       });
-      document.getElementById('vectorDisplay').innerHTML = '<span style="color:var(--muted);font-style:italic;font-size:13px">En attente…</span>';
-      document.getElementById('readPrompt').textContent = '👆 Cliquez pour lancer la lecture';
+      document.getElementById('vectorDisplay').innerHTML = '<span style="color:var(--muted);font-style:italic;font-size:13px">En attente&#8230;</span>';
+      document.getElementById('readPrompt').textContent = 'Cliquez pour lancer la lecture';
       document.getElementById('vectorConclusionCard').style.display = 'none';
       document.getElementById('phaseB').style.display = 'none';
       grid.onclick = startAnimation;
@@ -1083,13 +1149,11 @@
       document.getElementById('vectorDisplay').innerHTML = '';
       document.getElementById('phaseB').style.display = 'none';
       document.getElementById('vectorConclusionCard').style.display = 'none';
-
       const cells = document.getElementById('pixelInputGrid').children;
       Array.from(cells).forEach((div, i) => {
         div.style.background = POLICE_A[i] ? '#4f8ef7' : '#1e2438';
         div.style.outline = 'none';
       });
-
       let row = 0;
       function readNextRow() {
         if (row > 0) {
@@ -1108,7 +1172,7 @@
         const vals = POLICE_A.slice(row * 10, row * 10 + 10);
         const rowDiv = document.createElement('div');
         rowDiv.style.cssText = 'padding:2px 6px;border-radius:4px;background:rgba(247,121,79,0.15);border:1px solid #f7794f;animation:fadeIn .2s ease;letter-spacing:4px;display:inline-block;';
-        rowDiv.innerHTML = vals.map(v => `<span style="color:${v ? '#4f8ef7' : '#ffffff'};font-weight:${v ? '700' : '400'}">${v}</span>`).join(' ');
+        rowDiv.innerHTML = vals.map(v => '<span style="color:' + (v ? '#4f8ef7' : '#ffffff') + ';font-weight:' + (v ? '700' : '400') + '">' + v + '</span>').join(' ');
         const vd = document.getElementById('vectorDisplay');
         vd.appendChild(rowDiv);
         vd.scrollTop = vd.scrollHeight;
@@ -1121,40 +1185,25 @@
     function showVectorColumn() {
       const pb = document.getElementById('phaseB');
       pb.style.display = 'block';
-
-      // ── Mini-lignes oranges alignées sur les groupes de 10 ──
       const miniRows = document.getElementById('miniRows');
       miniRows.innerHTML = '';
-      const GROUP_H = 10 * 14; // 10 cases × 14px = 140px par groupe
+      const GROUP_H = 10 * 14;
       for (let r = 0; r < 10; r++) {
         const vals = POLICE_A.slice(r * 10, r * 10 + 10);
         const d = document.createElement('div');
-        d.style.cssText = `
-      height:${GROUP_H}px;
-      display:flex;align-items:center;
-      padding:0 4px;
-      border-radius:3px;
-      background:rgba(247,121,79,0.12);
-      border:1px solid #f7794f;
-      font-family:monospace;font-size:7px;letter-spacing:2px;white-space:nowrap;
-      box-sizing:border-box;
-    `;
-        d.innerHTML = vals.map(v => `<span style="color:${v ? '#4f8ef7' : '#ffffff'};font-weight:${v ? '700' : '400'}">${v}</span>`).join('');
+        d.style.cssText = 'height:' + GROUP_H + 'px;display:flex;align-items:center;padding:0 4px;border-radius:3px;background:rgba(247,121,79,0.12);border:1px solid #f7794f;font-family:monospace;font-size:7px;letter-spacing:2px;white-space:nowrap;box-sizing:border-box;';
+        d.innerHTML = vals.map(v => '<span style="color:' + (v ? '#4f8ef7' : '#ffffff') + ';font-weight:' + (v ? '700' : '400') + '">' + v + '</span>').join('');
         miniRows.appendChild(d);
       }
-
-      // ── Flèches oranges alignées sur les groupes de 10 ──
       const arrowCol = document.getElementById('arrowCol');
       arrowCol.innerHTML = '';
       for (let r = 0; r < 10; r++) {
         const a = document.createElement('div');
-        a.style.cssText = `height:${GROUP_H}px;display:flex;align-items:center;font-size:13px;color:#f7794f;opacity:0;transition:opacity .3s;`;
-        a.textContent = '→';
+        a.style.cssText = 'height:' + GROUP_H + 'px;display:flex;align-items:center;font-size:13px;color:#f7794f;opacity:0;transition:opacity .3s;';
+        a.textContent = '>';
         arrowCol.appendChild(a);
-        setTimeout(() => { a.style.opacity = '1'; }, r * 42 + 100);
+        setTimeout(function (el) { return function () { el.style.opacity = '1'; }; }(a), r * 42 + 100);
       }
-
-      // ── Vecteur colonne : 10 groupes de 10 cases ──
       const col = document.getElementById('vectorColumn');
       col.innerHTML = '';
       for (let g = 0; g < 10; g++) {
@@ -1170,14 +1219,12 @@
         }
         col.appendChild(group);
       }
-
-      // ── Remplissage animé case par case ──
       let idx = 0;
       function fillNext() {
         if (idx >= 100) {
           animRunning = false;
-          document.getElementById('readPrompt').textContent = '↺ Cliquez pour rejouer';
-          document.getElementById('pixelInputGrid').onclick = () => { initPixelInput(); setTimeout(startAnimation, 100); };
+          document.getElementById('readPrompt').textContent = 'Cliquez pour rejouer';
+          document.getElementById('pixelInputGrid').onclick = function () { initPixelInput(); setTimeout(startAnimation, 100); };
           document.getElementById('vectorConclusionCard').style.display = 'block';
           document.getElementById('vectorConclusionCard').style.animation = 'fadeIn .5s ease';
           return;
@@ -1193,21 +1240,21 @@
       fillNext();
     }
 
-    // ── ÉCRAN 2 ──
+    // ECRAN 2
     function initNetwork() {
       const svg = document.getElementById('networkCanvas');
       svg.innerHTML = '';
       const W = 700, H = 340;
-      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
       const TOP = 42;
       const cols = [
-        { x: 80, n: 6, color: '#4f8ef7', label: '100 entrées\n(pixels)', clickable: false, dotBelow: true },
-        { x: 350, n: 5, color: '#f7794f', label: '16 neurones\ncachés', clickable: true, dotBelow: true },
-        { x: 620, n: 5, color: '#3ecf7a', label: '10 sorties\n(chiffres 0–9)', clickable: false, dotBelow: false },
+        { x: 80, n: 6, color: '#4f8ef7', label: '100 entrees\n(pixels)', clickable: false, dotBelow: true },
+        { x: 350, n: 5, color: '#f7794f', label: '16 neurones\ncaches', clickable: true, dotBelow: true },
+        { x: 620, n: 5, color: '#3ecf7a', label: '10 sorties\n(chiffres 0-9)', clickable: false, dotBelow: false },
       ];
       const USABLE_H = H - TOP - 40;
       const ns = {};
-      cols.forEach((col, ci) => {
+      cols.forEach(function (col, ci) {
         ns[ci] = [];
         const spacing = USABLE_H / (col.n + 1);
         for (let i = 0; i < col.n; i++) ns[ci].push({ x: col.x, y: TOP + spacing * (i + 1) });
@@ -1216,38 +1263,57 @@
       cg.setAttribute('opacity', '0.18');
       for (let h = 0; h < ns[1].length; h++) for (let i = 0; i < ns[0].length; i++) {
         const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        l.setAttribute('x1', ns[0][i].x); l.setAttribute('y1', ns[0][i].y); l.setAttribute('x2', ns[1][h].x); l.setAttribute('y2', ns[1][h].y);
+        l.setAttribute('x1', ns[0][i].x); l.setAttribute('y1', ns[0][i].y);
+        l.setAttribute('x2', ns[1][h].x); l.setAttribute('y2', ns[1][h].y);
         l.setAttribute('stroke', '#4f8ef7'); l.setAttribute('stroke-width', '0.8'); cg.appendChild(l);
       }
       for (let o = 0; o < ns[2].length; o++) for (let h = 0; h < ns[1].length; h++) {
         const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        l.setAttribute('x1', ns[1][h].x); l.setAttribute('y1', ns[1][h].y); l.setAttribute('x2', ns[2][o].x); l.setAttribute('y2', ns[2][o].y);
+        l.setAttribute('x1', ns[1][h].x); l.setAttribute('y1', ns[1][h].y);
+        l.setAttribute('x2', ns[2][o].x); l.setAttribute('y2', ns[2][o].y);
         l.setAttribute('stroke', '#f7794f'); l.setAttribute('stroke-width', '0.8'); cg.appendChild(l);
       }
       svg.appendChild(cg);
-      cols.forEach(col => {
-        col.label.split('\n').forEach((line, li) => {
+      cols.forEach(function (col) {
+        col.label.split('\n').forEach(function (line, li) {
           const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-          t.setAttribute('x', col.x); t.setAttribute('y', 13 + li * 14); t.setAttribute('text-anchor', 'middle');
-          t.setAttribute('fill', '#7a85a3'); t.setAttribute('font-size', '11'); t.setAttribute('font-family', 'monospace');
+          t.setAttribute('x', col.x); t.setAttribute('y', 13 + li * 14);
+          t.setAttribute('text-anchor', 'middle'); t.setAttribute('fill', '#7a85a3');
+          t.setAttribute('font-size', '11'); t.setAttribute('font-family', 'monospace');
           t.textContent = line; svg.appendChild(t);
         });
       });
-      cols.forEach((col, ci) => {
-        ns[ci].forEach((pos, i) => {
+      // Valeurs 0/1 du "3" pour les 6 neurones d'entree visibles
+      // On prend le pixel le plus representatif de chaque ligne : ligne 1->1, ligne 2->0, ligne 3->0, ligne 4->1, ligne 5->1, ligne 6->0
+      const inputVals = [1, 0, 0, 1, 1, 0];
+      cols.forEach(function (col, ci) {
+        ns[ci].forEach(function (pos, i) {
           const r = ci === 1 ? 14 : 10;
           const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
           circle.setAttribute('cx', pos.x); circle.setAttribute('cy', pos.y); circle.setAttribute('r', r);
           circle.setAttribute('fill', col.color); circle.setAttribute('stroke', '#0f1117'); circle.setAttribute('stroke-width', '2');
           if (col.clickable) {
             circle.style.cursor = 'pointer';
-            circle.addEventListener('click', () => showZoom(i + 1));
-            circle.addEventListener('mouseenter', () => circle.setAttribute('r', '17'));
-            circle.addEventListener('mouseleave', () => circle.setAttribute('r', '14'));
+            circle.addEventListener('click', function () { showZoom(i + 1); });
+            circle.addEventListener('mouseenter', function () { circle.setAttribute('r', '17'); });
+            circle.addEventListener('mouseleave', function () { circle.setAttribute('r', '14'); });
           }
           svg.appendChild(circle);
+          // Valeur 0/1 a droite des neurones d'entree (couche bleue)
+          if (ci === 0) {
+            const tv = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            tv.setAttribute('x', pos.x + 18);
+            tv.setAttribute('y', pos.y + 4);
+            tv.setAttribute('fill', inputVals[i] ? '#4f8ef7' : '#e8ecf5');
+            tv.setAttribute('font-size', '11');
+            tv.setAttribute('font-family', 'monospace');
+            tv.setAttribute('font-weight', inputVals[i] ? '700' : '400');
+            tv.textContent = String(inputVals[i]);
+            svg.appendChild(tv);
+          }
+          // Numerotation des sorties vertes
           if (ci === 2) {
-            const label = i < 4 ? String(i) : '…';
+            const label = i < 4 ? String(i) : '...';
             const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             t.setAttribute('x', pos.x); t.setAttribute('y', pos.y + 4); t.setAttribute('text-anchor', 'middle');
             t.setAttribute('fill', '#0f1117'); t.setAttribute('font-size', '10'); t.setAttribute('font-weight', '700'); t.setAttribute('font-family', 'monospace');
@@ -1255,7 +1321,7 @@
             const tl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             tl.setAttribute('x', pos.x + 18); tl.setAttribute('y', pos.y + 4); tl.setAttribute('fill', '#3ecf7a');
             tl.setAttribute('font-size', '10'); tl.setAttribute('font-family', 'monospace');
-            tl.textContent = i < 4 ? `chiffre ${i}` : 'chiffres 4–9'; svg.appendChild(tl);
+            tl.textContent = i < 4 ? 'chiffre ' + i : 'chiffres 4-9'; svg.appendChild(tl);
           }
         });
         if (col.dotBelow) {
@@ -1275,49 +1341,64 @@
     function showZoom(neuronId) {
       document.getElementById('zoomNeuronId').textContent = 'N' + neuronId;
       const offset = (neuronId - 1) * 0.1;
-      const weights = SAMPLE_WEIGHTS_BASE.map(w => +(w + offset * (Math.random() - 0.5)).toFixed(2));
+      const weights = SAMPLE_WEIGHTS_BASE.map(function (w) { return +(w + offset * (Math.random() - 0.5)).toFixed(2); });
       const grid = document.getElementById('zoomGrid');
       grid.innerHTML = '';
       const col = document.createElement('div');
       col.className = 'zoom-inputs';
-      col.innerHTML = '<div style="font-size:12px;color:var(--muted);font-family:var(--font-mono);margin-bottom:6px">Entrées (pixels)</div>';
-      SAMPLE_PIXELS.forEach((p, i) => {
+      col.innerHTML = '<div style="font-size:12px;color:var(--muted);font-family:var(--font-mono);margin-bottom:6px">Entrees (pixels)</div>';
+      SAMPLE_PIXELS.forEach(function (p, i) {
         const row = document.createElement('div');
         row.className = 'zoom-input-row';
-        row.innerHTML = `<div class="zoom-pixel ${p.val ? 'on' : ''}"></div><span style="color:var(--muted)">x<sub>${i + 1}</sub> = ${p.val}</span><span class="zoom-arrow">×</span><span class="zoom-w">w<sub>${i + 1}</sub> = ${weights[i] > 0 ? '+' : ''}${weights[i]}</span><span class="zoom-arrow">=</span><span style="color:${weights[i] * p.val >= 0 ? 'var(--ok)' : 'var(--bad)'}">${(weights[i] * p.val).toFixed(2)}</span>`;
+        row.innerHTML = '<div class="zoom-pixel ' + (p.val ? 'on' : '') + '"></div><span style="color:var(--muted)">x<sub>' + (i + 1) + '</sub> = ' + p.val + '</span><span class="zoom-arrow">x</span><span class="zoom-w">w<sub>' + (i + 1) + '</sub> = ' + (weights[i] > 0 ? '+' : '') + weights[i] + '</span><span class="zoom-arrow">=</span><span style="color:' + (weights[i] * p.val >= 0 ? 'var(--ok)' : 'var(--bad)') + '">' + (weights[i] * p.val).toFixed(2) + '</span>';
         col.appendChild(row);
       });
       grid.appendChild(col);
-      const sum = SAMPLE_PIXELS.reduce((acc, p, i) => acc + p.val * weights[i], 0);
+      const sum = SAMPLE_PIXELS.reduce(function (acc, p, i) { return acc + p.val * weights[i]; }, 0);
       const sigma = 1 / (1 + Math.exp(-sum));
-      document.getElementById('zoomSum').innerHTML = `<div style="color:var(--muted);font-size:12px;margin-bottom:6px">Somme pondérée (5 entrées sur 100 montrées) :</div><div style="color:var(--text)">z ≈ ${sum.toFixed(2)}</div><div style="margin-top:8px;color:var(--muted);font-size:12px">Après fonction d'activation :</div><div style="color:var(--accent);font-size:1.1em;font-weight:700">σ(z) = ${sigma.toFixed(3)}</div>`;
+      document.getElementById('zoomSum').innerHTML = '<div style="color:var(--muted);font-size:12px;margin-bottom:6px">Somme ponderee (5 entrees sur 100 montrees) :</div><div style="color:var(--text)">z = ' + sum.toFixed(2) + '</div><div style="margin-top:8px;color:var(--muted);font-size:12px">Apres fonction d\'activation :</div><div style="color:var(--accent);font-size:1.1em;font-weight:700">s(z) = ' + sigma.toFixed(3) + '</div>';
       document.getElementById('zoomPanel').classList.add('show');
       document.getElementById('zoomPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    // ── ÉCRAN 3 ──
-    const DEMO_PIXELS = [{ label: 'pixel (2,4)', val: 1 }, { label: 'pixel (4,7)', val: 1 }, { label: 'pixel (5,2)', val: 0 }, { label: 'pixel (7,8)', val: 1 }, { label: 'pixel (9,3)', val: 0 }];
+    // ECRAN 3
+    const DEMO_PIXELS = [{ label: '1er pixel', val: 1 }, { label: '2e pixel', val: 0 }, { label: '3e pixel', val: 1 }, { label: '4e pixel', val: 0 }, { label: '5e pixel', val: 1 }];
     let demoWeights = [0.5, 0.3, -0.2, 0.7, -0.5];
     function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
     function initSliders() {
       const container = document.getElementById('sliderRows');
       container.innerHTML = '';
-      DEMO_PIXELS.forEach((p, i) => {
+      DEMO_PIXELS.forEach(function (p, i) {
         const row = document.createElement('div');
         row.className = 'slider-row';
-        row.innerHTML = `<div class="pixel-demo ${p.val ? 'on' : ''}"></div><label>${p.label} (x=${p.val})</label><input type="range" min="-2" max="2" step="0.1" value="${demoWeights[i]}" oninput="demoWeights[${i}]=parseFloat(this.value);updateSliderVal(this,${i});updateOutput()"><span class="slider-val" id="sv${i}">${demoWeights[i].toFixed(1)}</span>`;
+        row.innerHTML = '<div class="pixel-demo ' + (p.val ? 'on' : '') + '"></div><label>' + p.label + ' (x=' + p.val + ')</label><input type="range" min="-2" max="2" step="0.1" value="' + demoWeights[i] + '" oninput="demoWeights[' + i + ']=parseFloat(this.value);updateSliderVal(this,' + i + ');updateOutput()"><span class="slider-val" id="sv' + i + '">' + demoWeights[i].toFixed(1) + '</span>';
         container.appendChild(row);
       });
       updateOutput(); drawSigmoid();
     }
     function updateSliderVal(input, i) { document.getElementById('sv' + i).textContent = parseFloat(input.value).toFixed(1); }
+    function updateSVG() {
+      for (var i = 0; i < 5; i++) {
+        var wt = document.getElementById('wt' + i);
+        if (wt) {
+          var v = demoWeights[i];
+          wt.textContent = 'w=' + (v >= 0 ? '+' : '') + v.toFixed(1);
+          wt.setAttribute('fill', v >= 0 ? '#3ecf7a' : '#f75a5a');
+        }
+      }
+      var out = sigmoid(DEMO_PIXELS.reduce(function (acc, p, i) { return acc + p.val * demoWeights[i]; }, 0));
+      var svgOut = document.getElementById('svg_out');
+      if (svgOut) svgOut.textContent = out.toFixed(2);
+    }
+
     function updateOutput() {
-      const z = DEMO_PIXELS.reduce((acc, p, i) => acc + p.val * demoWeights[i], 0);
+      const z = DEMO_PIXELS.reduce(function (acc, p, i) { return acc + p.val * demoWeights[i]; }, 0);
       const out = sigmoid(z);
       document.getElementById('outputBarFill').style.width = Math.round(out * 100) + '%';
       document.getElementById('outputVal').textContent = out.toFixed(3);
-      const interps = ['Le neurone est très peu activé — ce motif ne lui correspond pas.', 'Le neurone est faiblement activé.', 'Le neurone est modérément activé.', 'Le neurone est fortement activé — ce motif lui correspond bien.', 'Le neurone est très fortement activé !'];
+      const interps = ['Le neurone est tres peu active — ce motif ne lui correspond pas.', 'Le neurone est faiblement active.', 'Le neurone est moderement active.', 'Le neurone est fortement active — ce motif lui correspond bien.', 'Le neurone est tres fortement active !'];
       document.getElementById('outputInterp').textContent = interps[out < 0.2 ? 0 : out < 0.4 ? 1 : out < 0.6 ? 2 : out < 0.8 ? 3 : 4];
+      updateSVG();
     }
     function drawSigmoid() {
       const canvas = document.getElementById('sigmoidCanvas');
@@ -1335,27 +1416,27 @@
       ctx.fillText('0', W / 2 - 12, H - 3); ctx.fillText('1', W - 20, H / 2 - 4); ctx.fillText('0', 4, H - 3);
     }
 
-    // ── ÉCRAN 4 ──
+    // ECRAN 4
     const WEIGHT_PATTERNS = [
-      { label: 'Neurone 1\n(bord droit)', gen: (r, c) => c > 6 ? 0.8 : c > 4 ? 0.2 : -0.3 },
-      { label: 'Neurone 5\n(arc supérieur)', gen: (r, c) => r < 3 && c > 2 && c < 8 ? 0.9 : r < 5 && (c === 2 || c === 8) ? 0.5 : -0.2 },
-      { label: 'Neurone 9\n(jonction centrale)', gen: (r, c) => r > 3 && r < 6 && c > 3 && c < 8 ? 0.85 : -0.15 },
-      { label: 'Neurone 14\n(bord gauche)', gen: (r, c) => c < 3 ? 0.7 : c < 5 ? 0.1 : -0.4 },
+      { label: 'Neurone 1\n(bord droit)', gen: function (r, c) { return c > 6 ? 0.8 : c > 4 ? 0.2 : -0.3; } },
+      { label: 'Neurone 5\n(arc superieur)', gen: function (r, c) { return r < 3 && c > 2 && c < 8 ? 0.9 : r < 5 && (c === 2 || c === 8) ? 0.5 : -0.2; } },
+      { label: 'Neurone 9\n(jonction centrale)', gen: function (r, c) { return r > 3 && r < 6 && c > 3 && c < 8 ? 0.85 : -0.15; } },
+      { label: 'Neurone 14\n(bord gauche)', gen: function (r, c) { return c < 3 ? 0.7 : c < 5 ? 0.1 : -0.4; } },
     ];
     function initWeightMaps() {
       const wrap = document.getElementById('weightMapWrap');
       wrap.innerHTML = '';
-      WEIGHT_PATTERNS.forEach(pat => {
+      WEIGHT_PATTERNS.forEach(function (pat) {
         const item = document.createElement('div');
         item.className = 'weight-map-item';
-        item.innerHTML = `<div class="weight-map-label">${pat.label.split('\n').join('<br>')}</div>`;
+        item.innerHTML = '<div class="weight-map-label">' + pat.label.split('\n').join('<br>') + '</div>';
         const grid = document.createElement('div');
         grid.className = 'weight-grid';
         for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) {
           const w = pat.gen(r, c) + (Math.random() - 0.5) * 0.25;
           const div = document.createElement('div');
           div.className = 'weight-pixel';
-          div.style.background = w > 0.15 ? `rgba(62,207,122,${Math.min(w, 1)})` : w < -0.15 ? `rgba(247,90,90,${Math.min(-w, 1)})` : '#1e2438';
+          div.style.background = w > 0.15 ? 'rgba(62,207,122,' + Math.min(w, 1) + ')' : w < -0.15 ? 'rgba(247,90,90,' + Math.min(-w, 1) + ')' : '#1e2438';
           grid.appendChild(div);
         }
         item.appendChild(grid);
