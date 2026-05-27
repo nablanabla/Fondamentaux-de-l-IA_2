@@ -1396,7 +1396,7 @@
       const out = sigmoid(z);
       document.getElementById('outputBarFill').style.width = Math.round(out * 100) + '%';
       document.getElementById('outputVal').textContent = out.toFixed(3);
-      const interps = ['Le neurone est tres peu active — ce motif ne lui correspond pas.', 'Le neurone est faiblement active.', 'Le neurone est moderement active.', 'Le neurone est fortement active — ce motif lui correspond bien.', 'Le neurone est tres fortement active !'];
+      const interps = ['Le neurone est tres peu actif — ce motif ne lui correspond pas.', 'Le neurone est faiblement actif.', 'Le neurone est moderement actif.', 'Le neurone est fortement actif — ce motif lui correspond bien.', 'Le neurone est tres fortement actif !'];
       document.getElementById('outputInterp').textContent = interps[out < 0.2 ? 0 : out < 0.4 ? 1 : out < 0.6 ? 2 : out < 0.8 ? 3 : 4];
       updateSVG();
     }
