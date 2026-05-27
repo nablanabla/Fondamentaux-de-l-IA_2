@@ -19,9 +19,9 @@ Dans cette activité, vous allez explorer ces limites par vous-même, en tentant
 
 Cette expérience motivera l'introduction d'une approche radicalement différente : l'**approche connexionniste**, dans laquelle le programme n'est plus programmé avec des règles, mais apprend à partir d'exemples.
 
-**Durée estimée :** 20 minutes
-
 [Lancer l'activité 1: Expliquer à un ordinateur ce qu'est un 3](https://nablanabla.github.io/Fondamentaux-de-l-IA_2/phase1-symbolique/)
+
+**Durée estimée :** 20 minutes
 
 ### Quelques succès de l'approche symbolique en sciences de la santé
 
@@ -46,11 +46,19 @@ C'est précisément ce mécanisme que le **neurone artificiel** cherche à repro
     
 # ∑   L'inspiration mathématique : formaliser le fonctionnement des réseaux de neurones en fonction mathématique
 
-C'est l'idée révolutionnaire de Warren McCulloch et Walter Pitts (1943) dont l'article *A Logical Calculus of the Ideas Immanent in Nervous Activity* est l'acte de naissance des réseaux de neurones artificiels.
+C'est l'idée révolutionnaire de deux mathématiciens Warren McCulloch et Walter Pitts dont l'article de 1943 *A Logical Calculus of the Ideas Immanent in Nervous Activity* est l'acte de naissance des réseaux de neurones artificiels.
 
 
+<p align="center">
+   <img src="assets/images/A logical Calculus.png" alt="Logical">
+  <br>
+  <em>L'article de McCulloch&Pitts (1943) </em>
+</p>
 
 
+[Pour comprendre cette logique révolutionnaire, lancer l'activité 2: Et si on laissait la machine apprendre d'elle-même ?](https://nablanabla.github.io/Fondamentaux-de-l-IA_2/phase2-perceptron/)
+
+**Durée estimée :** 20 minutes
 
 
 ---
