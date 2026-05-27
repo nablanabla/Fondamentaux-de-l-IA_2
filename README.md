@@ -44,6 +44,14 @@ La reconnaissance de l'écriture manuscrite pose un problème d'une toute autre 
 Le cerveau humain contient environ [entre 85 et 86 milliards de neurones](https://institutducerveau.org/fiches-fonctions-cerveau/cerveau). Chaque neurone reçoit des signaux électriques de milliers d'autres neurones, les additionne, et s'active — ou non — selon que cette somme dépasse un certain seuil.
 C'est précisément ce mécanisme que le **neurone artificiel** cherche à reproduire, de façon mathématique et simplifiée.
     
+# ∑   L'inspiration mathématique : formaliser le fonctionnement des réseaux de neurones en fonction mathématique
+
+C'est l'idée révolutionnaire de Warren McCulloch et Walter Pitts (1943) dont l'article *A Logical Calculus of the Ideas Immanent in Nervous Activity* est l'acte de naissance des réseaux de neurones artificiels.
+
+
+
+
+
 
 ---
 
